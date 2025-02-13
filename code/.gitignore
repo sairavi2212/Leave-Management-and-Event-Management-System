@@ -1,4 +1,5 @@
 # Ignore everything in this directory
-*
-# Except this file
-!.gitignore
+
+# keep node modules in this
+
+node_modules/
