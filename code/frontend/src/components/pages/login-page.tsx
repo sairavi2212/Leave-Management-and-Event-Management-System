@@ -1,7 +1,9 @@
 import { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
 
@@ -15,10 +17,11 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+    console.log(formData);
     try {
       const response = await axios.post("http://localhost:5000/api/login", formData);
       localStorage.setItem("token", response.data.token);
-      console.log("Login successful!");
+      navigate("/home");
     } catch (err) {
       console.error(err);
       setError("Login failed. Please check your credentials.");
