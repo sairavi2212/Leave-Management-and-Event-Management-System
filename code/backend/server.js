@@ -6,6 +6,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import User from './models/users.js';
 import auth from './middleware/auth.js';
+import Event from './models/events.js';
+import Project from './models/projects.js';
 
 dotenv.config();
 const app = express();
@@ -73,6 +75,16 @@ app.get('/api/user/profile', async (req, res) => {
     res.json({ username });
   }
   catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+
+app.get('/api/events', async (req, res) => {
+  try {
+    const events = await Event.find();
+    res.json(events);
+  } catch (error) {
     res.status(500).json({ message: 'Server Error' });
   }
 });

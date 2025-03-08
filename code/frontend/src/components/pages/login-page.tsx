@@ -1,16 +1,11 @@
 import { useState } from "react";
 import axios from "axios";
-<<<<<<< HEAD
-import { useNavigate } from "react-router-dom";
-=======
 import { useNavigate } from "react-router-dom"; 
->>>>>>> 7ab4c32c9066dda2fdd9351a7e672d19e81a6f9d
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
-  const navigate = useNavigate(); 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -26,12 +21,7 @@ export default function LoginPage() {
     try {
       const response = await axios.post("http://localhost:5000/api/login", formData);
       localStorage.setItem("token", response.data.token);
-<<<<<<< HEAD
       navigate("/home");
-=======
-      console.log("Login successful!");
-      navigate("/profile"); 
->>>>>>> 7ab4c32c9066dda2fdd9351a7e672d19e81a6f9d
     } catch (err) {
       console.error(err);
       setError("Login failed. Please check your credentials.");
