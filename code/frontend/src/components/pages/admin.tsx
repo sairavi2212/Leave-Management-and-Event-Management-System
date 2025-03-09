@@ -116,7 +116,7 @@ const AdminLeaves: React.FC = () => {
           startDate: '2025-03-15',
           endDate: '2025-03-18',
           reason: 'Need to recover from flu',
-          status: 'pending',
+          status: 'pending' as 'pending',
           submittedAt: '2025-03-10T10:00:00Z'
         },
         {
@@ -131,7 +131,7 @@ const AdminLeaves: React.FC = () => {
           startDate: '2025-03-20',
           endDate: '2025-03-21',
           reason: 'Family event',
-          status: 'approved',
+          status: 'approved' as 'approved',
           submittedAt: '2025-03-12T09:00:00Z',
           approvedBy: 'admin1',
           approvedAt: '2025-03-13T14:00:00Z',
@@ -149,7 +149,7 @@ const AdminLeaves: React.FC = () => {
           startDate: '2025-04-01',
           endDate: '2025-04-07',
           reason: 'Annual vacation',
-          status: 'rejected',
+          status: 'rejected' as 'rejected',
           submittedAt: '2025-03-14T11:30:00Z',
           approvedBy: 'admin1',
           approvedAt: '2025-03-15T16:00:00Z',

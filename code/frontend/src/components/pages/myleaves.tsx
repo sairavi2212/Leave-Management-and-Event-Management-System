@@ -5,11 +5,8 @@ import {
   Clock,
   X,
   CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
   RefreshCcw,
   Filter,
-  LoaderCircle,
   Eye
 } from 'lucide-react';
 import {
@@ -274,8 +271,8 @@ const MyLeaves: React.FC = () => {
                 
                 <div>
                   <p className="text-sm text-muted-foreground">Reason for Leave</p>
-                  <p className="text-base bg-gray-50 p-3 rounded-md border mt-1 text-gray-800">
-                    {selectedLeave.reason || "No reason provided"}
+                  <p className="text-base bg-gray-50 p-3 rounded-md border mt-1">
+                    {selectedLeave.reason}
                   </p>
                 </div>
                 
