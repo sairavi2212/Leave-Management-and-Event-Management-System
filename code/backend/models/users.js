@@ -41,7 +41,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+<<<<<<< HEAD
 
+=======
+>>>>>>> 967be36 (add role hierarchy)
 });
 
 const User = mongoose.model("User", userSchema);

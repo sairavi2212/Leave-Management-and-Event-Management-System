@@ -18,13 +18,8 @@ import NavUser from "@/components/nav-user";
 const items = [
   {
     title: "Home",
-    url: "#",
+    url: "home",
     icon: Home,
-  },
-  {
-    title: "Inbox",
-    url: "#",
-    icon: Inbox,
   },
 ]
 
