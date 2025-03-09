@@ -78,12 +78,9 @@ app.get('/api/user/profile', async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
 // Get all events
-=======
 
 // Get all events with location filter
->>>>>>> 967be36 (add role hierarchy)
 app.get('/api/events', async (req, res) => {
   try {
       const { authorization } = req.headers;

@@ -101,7 +101,6 @@ const HomePage: React.FC = () => {
                         <Button 
                             variant="ghost" 
                             className="w-full justify-start"
-<<<<<<< HEAD
                             onClick={() => navigate('/leaves')}
                         >
                             Leave Request
@@ -120,11 +119,13 @@ const HomePage: React.FC = () => {
                             onClick={() => navigate('/admin')}
                         >
                             User Requests
-=======
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            className="w-full justify-start"
                             onClick={() => navigate('/hierarchy')}
                         >
                             View Hierarchy
->>>>>>> 967be36 (add role hierarchy)
                         </Button>
                     </nav>
                 </div>
