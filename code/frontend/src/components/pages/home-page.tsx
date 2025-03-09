@@ -67,6 +67,28 @@ const HomePage: React.FC = () => {
                         >
                             Projects
                         </Button>
+                        <Button 
+                            variant="ghost" 
+                            className="w-full justify-start"
+                            onClick={() => navigate('/leaves')}
+                        >
+                            Leave Request
+                        </Button>
+                        <Button 
+                            variant="ghost" 
+                            className="w-full justify-start"
+                            onClick={() => navigate('/myleaves')}
+                        >
+                            My Leaves
+                        </Button>
+                        
+                        <Button
+                            variant="ghost"
+                            className="w-full justify-start"
+                            onClick={() => navigate('/admin')}
+                        >
+                            User Requests
+                        </Button>
                     </nav>
                 </div>
 

@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 import User from './models/users.js';
 import auth from './middleware/auth.js';
 import Event from './models/events.js';
-import Project from './models/projects.js';
+import Leave from './models/leaves.js';  // Import the Leave model
 
 dotenv.config();
 const app = express();
@@ -27,7 +27,6 @@ mongoose.connect(MONGODB_URI)
   });
 
 // Login Route
-
 app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -79,13 +78,130 @@ app.get('/api/user/profile', async (req, res) => {
   }
 });
 
-
+// Get all events
 app.get('/api/events', async (req, res) => {
   try {
     const events = await Event.find();
     res.json(events);
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+// Leave Management Routes
+
+// Submit a leave request
+app.post('/api/leaves', auth, async (req, res) => {
+  try {
+    const { leaveType, startDate, endDate, reason } = req.body;
+    
+    // Create new leave request
+    const leave = new Leave({
+      userId: req.user.userId,
+      leaveType,
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      reason,
+      status: 'pending',
+      submittedAt: new Date()
+    });
+    
+    await leave.save();
+    res.status(201).json({ 
+      message: 'Leave request submitted successfully', 
+      leave 
+    });
+  } catch (error) {
+    console.error('Error submitting leave request:', error);
+    res.status(500).json({ message: 'Failed to submit leave request', error: error.message });
+  }
+});
+
+// Get all leave requests for the logged-in user
+app.get('/api/leaves', auth, async (req, res) => {
+  try {
+    const leaves = await Leave.find({ userId: req.user.userId }).sort({ submittedAt: -1 });
+    res.json(leaves);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch leave requests', error: error.message });
+  }
+});
+
+// Get all leave requests (for managers/admin)
+app.get('/api/leaves/all', auth, async (req, res) => {
+  try {
+    // First check if user is admin or manager
+    const user = await User.findById(req.user.userId);
+    if (user.role !== 'admin' && user.role !== 'manager') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    
+    const leaves = await Leave.find()
+      .populate('userId', 'name email')
+      .sort({ submittedAt: -1 });
+    
+    res.json(leaves);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch leave requests', error: error.message });
+  }
+});
+
+// Update leave request status (approve/reject)
+app.put('/api/leaves/:id', auth, async (req, res) => {
+  try {
+    // First check if user is admin or manager
+    const user = await User.findById(req.user.userId);
+    if (user.role !== 'admin' && user.role !== 'manager') {
+      return res.status(403).json({ message: 'Not authorized to update leave status' });
+    }
+    
+    const { status, comments } = req.body;
+    if (status !== 'approved' && status !== 'rejected') {
+      return res.status(400).json({ message: 'Invalid status value' });
+    }
+    
+    const leave = await Leave.findById(req.params.id);
+    if (!leave) {
+      return res.status(404).json({ message: 'Leave request not found' });
+    }
+    
+    leave.status = status;
+    leave.comments = comments || '';
+    leave.approvedBy = req.user.userId;
+    leave.approvedAt = new Date();
+    
+    await leave.save();
+    res.json({ message: `Leave request ${status}`, leave });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update leave request', error: error.message });
+  }
+});
+
+// Delete a leave request (only if it's pending and belongs to the user)
+app.delete('/api/leaves/:id', auth, async (req, res) => {
+  try {
+    const leave = await Leave.findById(req.params.id);
+    
+    if (!leave) {
+      return res.status(404).json({ message: 'Leave request not found' });
+    }
+    
+    // Check if the leave belongs to the requesting user or the user is admin
+    const user = await User.findById(req.user.userId);
+    
+    if (leave.userId.toString() !== req.user.userId && user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to delete this leave request' });
+    }
+    
+    // Only allow deletion of pending leaves
+    if (leave.status !== 'pending' && user.role !== 'admin') {
+      return res.status(400).json({ message: 'Cannot delete a leave request that has been processed' });
+    }
+    
+    await Leave.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Leave request deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete leave request', error: error.message });
   }
 });
 

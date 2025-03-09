@@ -4,6 +4,9 @@ import LoginPage from "@/components/pages/login-page";
 import HomePage from "@/components/pages/home-page";
 import ProfilePage from "@/components/pages/profile-page";
 import LandingPage from "./components/pages/landing-page";
+import Leaves from "./components/pages/leaves";
+import MyLeaves from "./components/pages/myleaves";
+import AdminLeaves from "./components/pages/admin";
 
 function App() {
     return (
@@ -15,6 +18,10 @@ function App() {
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/home" element={<HomePage/>} />
                     <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/leaves" element={<Leaves />} />
+                    <Route path="/myleaves" element={<MyLeaves />} />
+                    <Route path ="/admin" element={<AdminLeaves />} />"
+
                 </Routes>
             </Router>
         </>
