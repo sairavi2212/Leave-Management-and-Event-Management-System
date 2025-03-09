@@ -100,64 +100,25 @@ const AdminLeaves: React.FC = () => {
 
       const data = await response.json();
       setLeaves(data);
-    //   */
-      
-      // Mock data for UI testing
-      const mockData = [
-        {
-          _id: '1',
-          userId: 'user1',
-          user: {
-            _id: 'user1',
-            name: 'John Doe',
-            email: 'john@example.com'
-          },
-          leaveType: 'sick',
-          startDate: '2025-03-15',
-          endDate: '2025-03-18',
-          reason: 'Need to recover from flu',
-          status: 'pending',
-          submittedAt: '2025-03-10T10:00:00Z'
-        },
-        {
-          _id: '2',
-          userId: 'user2',
-          user: {
-            _id: 'user2',
-            name: 'Jane Smith',
-            email: 'jane@example.com'
-          },
-          leaveType: 'casual',
-          startDate: '2025-03-20',
-          endDate: '2025-03-21',
-          reason: 'Family event',
-          status: 'approved',
-          submittedAt: '2025-03-12T09:00:00Z',
-          approvedBy: 'admin1',
-          approvedAt: '2025-03-13T14:00:00Z',
-          comments: 'Approved as requested'
-        },
-        {
-          _id: '3',
-          userId: 'user3',
-          user: {
-            _id: 'user3',
-            name: 'Alex Johnson',
-            email: 'alex@example.com'
-          },
-          leaveType: 'earned',
-          startDate: '2025-04-01',
-          endDate: '2025-04-07',
-          reason: 'Annual vacation',
-          status: 'rejected',
-          submittedAt: '2025-03-14T11:30:00Z',
-          approvedBy: 'admin1',
-          approvedAt: '2025-03-15T16:00:00Z',
-          comments: 'Insufficient leave balance'
-        }
-      ];
       
       // Set the mock data
+      const mockData: Leave[] = [
+        {
+          _id: '1',
+          userId: '1',
+          user: { _id: '1', name: 'John Doe', email: 'john.doe@example.com' },
+          leaveType: 'sick',
+          startDate: '2023-10-01',
+          endDate: '2023-10-05',
+          reason: 'Flu',
+          status: 'pending',
+          submittedAt: '2023-09-30T10:00:00Z',
+          comments: '',
+          approvedBy: '',
+          approvedAt: ''
+        },
+        // Add more mock leave data as needed
+      ];
       setLeaves(mockData);
       
     } catch (error) {

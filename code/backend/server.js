@@ -8,6 +8,8 @@ import User from './models/users.js';
 import auth from './middleware/auth.js';
 import Event from './models/events.js';
 import Leave from './models/leaves.js';  // Import the Leave model
+import RoleHierarchy from './models/RoleHierarchy.js';  // Import the RoleHierarchy model
+import Project from './models/projects.js';
 
 dotenv.config();
 const app = express();

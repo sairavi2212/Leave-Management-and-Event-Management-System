@@ -20,4 +20,5 @@ const RoleHierarchySchema = new mongoose.Schema({
     }
 });
 
-export const RoleHierarchy = mongoose.model('RoleHierarchy', RoleHierarchySchema);
+const RoleHierarchy = mongoose.model('RoleHierarchy', RoleHierarchySchema);
+export default RoleHierarchy;
