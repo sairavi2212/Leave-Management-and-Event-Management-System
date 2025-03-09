@@ -36,7 +36,7 @@ export default function CreateEmail() {
     return (
         <Dialog>
             <DialogTrigger>
-                <Button variant="outline">Create Email</Button>
+                <Button variant="outline">Create Event</Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogDescription>
