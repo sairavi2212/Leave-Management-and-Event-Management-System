@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Layout from "@/components/layout";
 import { format } from 'date-fns';
 import {
   Check,
@@ -143,7 +144,13 @@ const MyLeaves: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto pt-24 pb-16 p-4 max-w-6xl">
+    <Layout>
+    <div style={{
+                    paddingLeft: '50vh',
+                    paddingRight: '0vh',
+                    width: '130vh',
+                    height: '30vh',
+                }}>
       <Card className="shadow-md">
         <CardHeader className="pb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -308,6 +315,7 @@ const MyLeaves: React.FC = () => {
         </DialogContent>
       </Dialog>
     </div>
+    </Layout>
   );
 };
 
