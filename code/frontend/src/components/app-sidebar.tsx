@@ -1,4 +1,4 @@
-import {Home, Inbox} from "lucide-react"
+import {Home} from "lucide-react"
 
 import {
   Sidebar,
@@ -18,14 +18,40 @@ import NavUser from "@/components/nav-user";
 const items = [
   {
     title: "Home",
-    url: "#",
+    url: "home",
     icon: Home,
   },
   {
-    title: "Inbox",
-    url: "#",
-    icon: Inbox,
+    title: "Events",
+    url: "events",
+    icon: Home,
   },
+  {
+    title: "Projects",
+    url: "projects",
+    icon: Home,
+  },
+  {
+    title: "Leave Request",
+    url: "leaves",
+    icon: Home,
+  },
+  {
+    title: "My Leaves",
+    url: "myleaves",
+    icon: Home,
+  },
+  {
+    title: "User Requests",
+    url: "admin",
+    icon: Home,
+  },
+  {
+    title: "View Hierarchy",
+    url: "hierarchy",
+    icon: Home,
+  }
+
 ]
 
 export function AppSidebar() {

@@ -8,6 +8,8 @@ import User from './models/users.js';
 import auth from './middleware/auth.js';
 import Event from './models/events.js';
 import Leave from './models/leaves.js';  // Import the Leave model
+import RoleHierarchy from './models/RoleHierarchy.js';  // Import the RoleHierarchy model
+import Project from './models/projects.js';
 
 dotenv.config();
 const app = express();
@@ -79,12 +81,91 @@ app.get('/api/user/profile', async (req, res) => {
 });
 
 // Get all events
+
+// Get all events with location filter
 app.get('/api/events', async (req, res) => {
   try {
-    const events = await Event.find();
-    res.json(events);
+      const { authorization } = req.headers;
+      console.log(authorization);
+      if (!authorization) {
+          return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      const token = authorization.replace('Bearer ', '');
+      const payload = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(payload.userId);
+
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+      const events = await Event.find({
+          locations: { $in: [user.location] }
+      });
+      console.log(events);
+      console.log("hi");
+      res.json(events);
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+      res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+
+// Get recent events with location filter
+app.get('/api/events/recent', async (req, res) => {
+  try {
+      const { authorization } = req.headers;
+      if (!authorization) {
+          return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      const token = authorization.replace('Bearer ', '');
+      const payload = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(payload.userId);
+
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+
+      const recentEvents = await Event.find({
+          locations: { $in: [user.location] }
+      })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select('title description start end');
+
+      res.json(recentEvents);
+  } catch (error) {
+      res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+app.get('/api/projects/recent', async (req, res) => {
+  try {
+      const { authorization } = req.headers;
+      if (!authorization) {
+          return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      const token = authorization.replace('Bearer ', '');
+      const payload = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(payload.userId);
+
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+      const recentProjects = await Project.find({
+          $or: [
+              { manager: user.name },
+              { users: user.name }
+          ]
+      })
+      .sort({ createdAt: -1 })
+      .limit(3)
+      .select('name description startDate endDate');
+      res.json(recentProjects);
+  } catch (error) {
+      console.error('Error fetching recent projects:', error);
+      res.status(500).json({ message: 'Server Error' });
   }
 });
 
@@ -214,6 +295,67 @@ app.get('/api/protected', auth, async (req, res) => {
     res.status(500).json({ message: 'Server Error' });
   }
 });
+
+// Add these routes to your existing server.js
+
+app.post('/api/roles/hierarchy', async (req, res) => {
+  try {
+      const { authorization } = req.headers;
+      if (!authorization) {
+          return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      const token = authorization.replace('Bearer ', '');
+      const payload = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(payload.userId);
+
+      if (!user || user.role !== 'admin') {
+          return res.status(403).json({ message: 'Not authorized' });
+      }
+
+      const { role, parentRole, childRole, level } = req.body;
+      
+      // Create new role
+      const newRole = new RoleHierarchy({
+          role,
+          parentRole,
+          childRole,
+          level
+      });
+
+      await newRole.save();
+
+      // Update child levels
+      if (childRole) {
+          await updateChildLevels(role, level);
+      }
+
+      res.status(201).json(newRole);
+  } catch (error) {
+      res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+app.get('/api/roles/hierarchy', async (req, res) => {
+  try {
+      const roles = await RoleHierarchy.find().sort('level');
+      res.json(roles);
+  } catch (error) {
+      res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+async function updateChildLevels(parentRole, parentLevel) {
+  const children = await RoleHierarchy.find({ parentRole });
+  for (const child of children) {
+      await RoleHierarchy.findByIdAndUpdate(
+          child._id,
+          { level: parentLevel + 1 },
+          { new: true }
+      );
+      await updateChildLevels(child.role, parentLevel + 1);
+  }
+}
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

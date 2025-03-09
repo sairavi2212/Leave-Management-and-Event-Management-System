@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CheckCircle, Edit, User, X } from 'lucide-react';
 
+
 const Profile: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
@@ -22,10 +23,10 @@ const Profile: React.FC = () => {
         setSuccessMessage('');
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setEditFormData({ ...editFormData, [name]: value });
-    };
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setEditFormData({ ...editFormData, [name]: value });
+  };
 
     const handleSave = () => {
         setSuccessMessage('Profile updated successfully');

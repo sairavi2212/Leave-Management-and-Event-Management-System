@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
+import Layout from '@/components/layout';
 import {
   Check,Clock,X,CalendarIcon,RefreshCcw,Filter,LoaderCircle,User,ThumbsUp,ThumbsDown,
 } from 'lucide-react';
@@ -285,7 +286,13 @@ const AdminLeaves: React.FC = () => {
     });
 
   return (
-    <div className="container mx-auto pt-24 pb-16 p-4 max-w-7xl">
+    <Layout>
+    <div style={{
+                    paddingLeft: '40vh',
+                    paddingRight: '0vh',
+                    width: '150vh',
+                    height: '30vh',
+                }}>
       <Card className="shadow-md">
         <CardHeader className="pb-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -608,6 +615,7 @@ const AdminLeaves: React.FC = () => {
         </DialogContent>
       </Dialog>
     </div>
+    </Layout>
   );
 };
 
