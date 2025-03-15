@@ -127,6 +127,13 @@ const HomePage: React.FC = () => {
                         >
                             View Hierarchy
                         </Button>
+                        <Button
+                            variant="ghost"
+                            className="w-full justify-start"
+                            onClick={() => navigate('/leave-report')}
+                        >
+                            Leave Report
+                        </Button>
                     </nav>
                 </div>
 

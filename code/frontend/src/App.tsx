@@ -8,6 +8,7 @@ import Leaves from "./components/pages/leaves";
 import MyLeaves from "./components/pages/myleaves";
 import AdminLeaves from "./components/pages/admin";
 import HierarchyTree from "./components/pages/hierarchy";
+import LeaveReport from "./components/pages/leave_report";
 
 function App() {
     return (
@@ -22,8 +23,8 @@ function App() {
                     <Route path="/leaves" element={<Leaves />} />
                     <Route path="/myleaves" element={<MyLeaves />} />
                     <Route path ="/admin" element={<AdminLeaves />} />"
-
                     <Route path="/hierarchy" element={<HierarchyTree />} />
+                    <Route path="/leave-report" element={<LeaveReport />} />
                 </Routes>
             </Router>
         </>
