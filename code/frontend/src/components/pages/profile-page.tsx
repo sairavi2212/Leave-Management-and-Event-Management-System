@@ -1,42 +1,111 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CheckCircle, Edit, User, X } from 'lucide-react';
-
+import { CheckCircle, Edit, User, Loader } from 'lucide-react';
+import axios from 'axios';
 
 const Profile: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const [editFormData, setEditFormData] = useState({
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'johndoe@example.com',
-        age: 25,
-        contact: '123-456-7890'
+        firstName: '',
+        lastName: '',
+        email: '',
+        age: 0,
+        contact: ''
     });
+
+    // Fetch user data on component mount
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            try {
+                setLoading(true);
+                const token = localStorage.getItem('token');
+                
+                if (!token) {
+                    throw new Error('Authentication token not found');
+                }
+                
+                const response = await axios.get('http://localhost:5000/api/user/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                // Adapt field names if your API returns different field names
+                setEditFormData({
+                    firstName: response.data.firstName || response.data.name?.split(' ')[0] || '',
+                    lastName: response.data.lastName || response.data.name?.split(' ')[1] || '',
+                    email: response.data.email || '',
+                    age: response.data.age || 0,
+                    contact: response.data.contact || response.data.phone || ''
+                });
+                
+                setLoading(false);
+            } catch (err) {
+                console.error('Error fetching user profile:', err);
+                setError('Failed to load user profile. Please try again later.');
+                setLoading(false);
+            }
+        };
+        
+        fetchUserProfile();
+    }, []);
 
     const handleEditToggle = () => {
         setIsEditing(!isEditing);
         setSuccessMessage('');
     };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setEditFormData({ ...editFormData, [name]: value });
-  };
-
-    const handleSave = () => {
-        setSuccessMessage('Profile updated successfully');
-        setIsEditing(false);
-        
-        // Replace alert with more subtle notification
-        setTimeout(() => {
-            setSuccessMessage('');
-        }, 3000);
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setEditFormData({ ...editFormData, [name]: value });
     };
+
+    const handleSave = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                throw new Error('Authentication token not found');
+            }
+            
+            await axios.put('http://localhost:5000/api/user/profile', editFormData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            setSuccessMessage('Profile updated successfully');
+            setIsEditing(false);
+            
+            setTimeout(() => {
+                setSuccessMessage('');
+            }, 3000);
+        } catch (err) {
+            console.error('Error updating profile:', err);
+            setError('Failed to update profile. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading && !isEditing) {
+        return (
+            <div className="flex justify-center items-center min-h-screen bg-zinc-900 p-4">
+                <div className="flex flex-col items-center">
+                    <Loader className="h-8 w-8 animate-spin text-blue-500 mb-4" />
+                    <p className="text-white">Loading your profile...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex justify-center items-center min-h-screen bg-zinc-900 p-4">
@@ -49,11 +118,17 @@ const Profile: React.FC = () => {
                                 <User className="h-10 w-10 text-zinc-400" />
                             </AvatarFallback>
                         </Avatar>
-                        <CardTitle className="text-2xl text-center">Profile</CardTitle>
+                        <CardTitle className="text-2xl text-center">My Profile</CardTitle>
                     </div>
                 </CardHeader>
                 
                 <CardContent className="pt-2">
+                    {error && (
+                        <div className="mb-6 p-3 rounded bg-red-900/20 border border-red-800 text-red-300">
+                            {error}
+                        </div>
+                    )}
+                    
                     {successMessage && (
                         <div className="mb-6 p-3 rounded bg-green-900/20 border border-green-800 text-green-300 flex items-center">
                             <CheckCircle className="h-5 w-5 mr-2" />
@@ -125,13 +200,20 @@ const Profile: React.FC = () => {
                                     variant="default"
                                     onClick={handleSave}
                                     className="bg-blue-600 hover:bg-blue-700"
+                                    disabled={loading}
                                 >
-                                    Save
+                                    {loading ? (
+                                        <div className="flex items-center">
+                                            <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                            <span>Saving...</span>
+                                        </div>
+                                    ) : 'Save'}
                                 </Button>
                                 <Button 
                                     variant="outline" 
                                     onClick={() => setIsEditing(false)}
                                     className="border-zinc-600 text-zinc-300 hover:bg-zinc-700 hover:text-white"
+                                    disabled={loading}
                                 >
                                     Cancel
                                 </Button>
