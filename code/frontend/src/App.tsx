@@ -8,10 +8,8 @@ import Leaves from "./components/pages/leaves";
 import MyLeaves from "./components/pages/myleaves";
 import AdminLeaves from "./components/pages/admin";
 import HierarchyTree from "./components/pages/hierarchy";
+import LeaveReport from "./components/pages/leave_report";
 import ResetPasswordPage from "./components/pages/passwordreset";
-// In your routes file (e.g. App.tsx or index.tsx)
-
-// Add this inside your Routes component:
 
 function App() {
     return (
@@ -25,9 +23,10 @@ function App() {
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/leaves" element={<Leaves />} />
                     <Route path="/myleaves" element={<MyLeaves />} />
-                    <Route path="/admin" element={<AdminLeaves />} />"
-                    <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+                    <Route path ="/admin" element={<AdminLeaves />} />"
                     <Route path="/hierarchy" element={<HierarchyTree />} />
+                    <Route path="/leave-report" element={<LeaveReport />} />
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
                 </Routes>
             </Router>
         </>

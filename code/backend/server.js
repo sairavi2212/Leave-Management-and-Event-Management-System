@@ -119,7 +119,6 @@ app.get('/api/user/profile',async (req, res) => {
 app.get('/api/events', async (req, res) => {
   try {
       const { authorization } = req.headers;
-      console.log(authorization);
       if (!authorization) {
           return res.status(401).json({ message: 'Not authenticated' });
       }
@@ -134,8 +133,6 @@ app.get('/api/events', async (req, res) => {
       const events = await Event.find({
           locations: { $in: [user.location] }
       });
-      console.log(events);
-      console.log("hi");
       res.json(events);
   } catch (error) {
       res.status(500).json({ message: 'Server Error' });
@@ -390,6 +387,56 @@ async function updateChildLevels(parentRole, parentLevel) {
   }
 }
 
+app.get('/api/leaves/report', auth, async (req, res) => {
+  try {
+      const { authorization } = req.headers;
+      if (!authorization) {
+          return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      const token = authorization.replace('Bearer ', '');
+      const payload = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(payload.userId);
+
+      if (!user || user.role !== 'admin') {
+          return res.status(403).json({ message: 'Not authorized' });
+      }
+      const { month, year } = req.query;
+      const monthNum = parseInt(month);
+      const yearNum = parseInt(year);
+      
+      const startDate = new Date(yearNum, monthNum - 1, 1);
+      const endDate = new Date(yearNum, monthNum, 0);
+      // now group all the leaves whose start date and end date is within the given month and then group them by the userId and then group them by leave type and then sum the duration
+      const report = {}
+      const all_leaves = await Leave.find({
+          startDate: { $gte: startDate },
+          endDate: { $lte: endDate },
+          status: 'approved'
+      });
+
+      for (const leave of all_leaves){
+          if (!report[leave.userId]){
+              report[leave.userId] = {}
+          }
+          if (!report[leave.userId][leave.leaveType]){
+              report[leave.userId][leave.leaveType] = 0
+          }
+          report[leave.userId][leave.leaveType] += leave.duration
+      }
+      const final_report = {}
+      // in final report instead of userId just keep the user name by fetching it from the user collection
+      for (const userId in report){
+          const user = await User.findById(userId);
+          final_report[user.name] = report[userId]
+      }
+      res.json(final_report);
+  } catch (error) {
+      console.error('Error generating leave report:', error);
+      res.status(500).json({ message: 'Error generating leave report' });
+  }
+});
+
 const resetTokenSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -549,6 +596,7 @@ app.post('/api/reset-password/reset/:token', async (req, res) => {
     res.status(500).json({ message: 'Server Error' });
   }
 });
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

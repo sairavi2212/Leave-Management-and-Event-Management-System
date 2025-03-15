@@ -12,6 +12,7 @@
     "license": "ISC",
     "description": "",
     "dependencies": {
+        "@react-pdf/renderer": "^4.3.0",
         "bcryptjs": "^2.4.3",
         "cors": "^2.8.5",
         "date-fns": "^4.1.0",
