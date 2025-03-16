@@ -30,6 +30,39 @@ mongoose.connect(MONGODB_URI)
     process.exit(1); // Exit process with failure
   });
 
+app.get("api/user/profile", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select("-password");
+    res.json(user);
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+}
+);
+
+app.put("/api/user/profile", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const { name, email, age, contact, location } = req.body;
+    user.name = name;
+    user.email = email;
+    user.age = age;
+    user.contact = contact;
+    user.location = location;
+    await user.save();
+    res.json({ message: "Profile updated successfully" });
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+}
+);
+
+
 // Login Route
 app.post('/api/login', async (req, res) => {
   try {

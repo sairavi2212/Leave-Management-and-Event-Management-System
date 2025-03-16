@@ -112,7 +112,7 @@ export default function NavUser() {
                             <LogOut className="mr-2" />
                             Log out
                         </DropdownMenuItem>
-                    </DropdownMenuContent>
+                    </DropdownMenuContent   >
                 </DropdownMenu>
             </SidebarMenuItem>
         </SidebarMenu>
