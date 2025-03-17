@@ -51,8 +51,8 @@ export default function LoginPage() {
       localStorage.setItem("token", response.data.token);
       
       // Save user role if provided in response
-      if (response.data.role) {
-        localStorage.setItem("userRole", response.data.role);
+      if (response.data.user && response.data.user.role) {
+        localStorage.setItem("userRole", response.data.user.role);
       }
       
       navigate("/home");
@@ -182,6 +182,14 @@ export default function LoginPage() {
                   className="text-sm text-zinc-400 hover:text-white font-medium"
                 >
                   Return to home page
+                </button>
+              </div>
+              <div className="text-center">
+                <button 
+                  onClick={() => navigate("/first-time-login")}
+                  className="text-sm text-blue-400 hover:text-blue-300 font-medium"
+                >
+                  First Time Login?
                 </button>
               </div>
             </CardFooter>
