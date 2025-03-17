@@ -56,7 +56,8 @@ const HomePage: React.FC = () => {
                         eventsResponse.json(),
                         projectsResponse.json()
                     ]);
-                    setUsername(userData.username || 'User');
+                    const name = userData.firstName + ' ' + userData.lastName;
+                    setUsername(name || 'User');
                     setRecentEvents(eventsData);
                     setRecentProjects(projectsData);
                 }

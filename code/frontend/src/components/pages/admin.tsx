@@ -84,9 +84,7 @@ const AdminLeaves: React.FC = () => {
     setError(null);
     
     try {
-      // Comment out the actual API call
-    //   /*
-      const response = await fetch('http://localhost:5000/api/leaves/all', {
+      const response = await fetch('http://localhost:5000/api/leaves/subordinate', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -101,65 +99,6 @@ const AdminLeaves: React.FC = () => {
 
       const data = await response.json();
       setLeaves(data);
-    //   */
-      
-      // Mock data for UI testing
-      const mockData = [
-        {
-          _id: '1',
-          userId: 'user1',
-          user: {
-            _id: 'user1',
-            name: 'John Doe',
-            email: 'john@example.com'
-          },
-          leaveType: 'sick',
-          startDate: '2025-03-15',
-          endDate: '2025-03-18',
-          reason: 'Need to recover from flu',
-          status: 'pending' as 'pending',
-          submittedAt: '2025-03-10T10:00:00Z'
-        },
-        {
-          _id: '2',
-          userId: 'user2',
-          user: {
-            _id: 'user2',
-            name: 'Jane Smith',
-            email: 'jane@example.com'
-          },
-          leaveType: 'casual',
-          startDate: '2025-03-20',
-          endDate: '2025-03-21',
-          reason: 'Family event',
-          status: 'approved' as 'approved',
-          submittedAt: '2025-03-12T09:00:00Z',
-          approvedBy: 'admin1',
-          approvedAt: '2025-03-13T14:00:00Z',
-          comments: 'Approved as requested'
-        },
-        {
-          _id: '3',
-          userId: 'user3',
-          user: {
-            _id: 'user3',
-            name: 'Alex Johnson',
-            email: 'alex@example.com'
-          },
-          leaveType: 'earned',
-          startDate: '2025-04-01',
-          endDate: '2025-04-07',
-          reason: 'Annual vacation',
-          status: 'rejected' as 'rejected',
-          submittedAt: '2025-03-14T11:30:00Z',
-          approvedBy: 'admin1',
-          approvedAt: '2025-03-15T16:00:00Z',
-          comments: 'Insufficient leave balance'
-        }
-      ];
-      
-      // Set the mock data
-      setLeaves(mockData);
       
     } catch (error) {
       console.error('Error fetching leaves:', error);
@@ -178,7 +117,7 @@ const AdminLeaves: React.FC = () => {
     
     try {
       // Comment out the actual API call
-      /*
+      
       const response = await fetch(`http://localhost:5000/api/leaves/${selectedLeave._id}`, {
         method: 'PUT',
         headers: {
@@ -196,10 +135,6 @@ const AdminLeaves: React.FC = () => {
         throw new Error(errorData.message || `Failed to ${status === 'approved' ? 'approve' : 'reject'} leave request`);
       }
 
-      const data = await response.json();
-      */
-      
-      // Just update the local state for UI testing
       setLeaves(leaves.map(leave => 
         leave._id === selectedLeave._id ? { ...leave, status, comments } : leave
       ));
@@ -212,7 +147,7 @@ const AdminLeaves: React.FC = () => {
         setActionSuccess(null);
         commentForm.reset();
         // Don't call fetchLeaves to avoid API call
-        // fetchLeaves(); 
+        fetchLeaves(); 
       }, 1500);
       
     } catch (error) {

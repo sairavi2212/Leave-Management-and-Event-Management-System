@@ -271,12 +271,11 @@ app.get('/api/leaves', auth, async (req, res) => {
   }
 });
 
-// Get all leave requests (for managers/admin)
 app.get('/api/leaves/all', auth, async (req, res) => {
   try {
-    // First check if user is admin or manager
+    // First check if user is admin or superadmin
     const user = await User.findById(req.user.userId);
-    if (user.role !== 'admin' && user.role !== 'manager') {
+    if (user.role !== 'admin' && user.role !== 'superadmin') {
       return res.status(403).json({ message: 'Not authorized' });
     }
     
@@ -290,12 +289,38 @@ app.get('/api/leaves/all', auth, async (req, res) => {
   }
 });
 
+
+app.get('/api/leaves/subordinate', auth, async (req, res) => {
+  try {
+    // First check if user is admin or superadmin
+    const user = await User.findById(req.user.userId);
+    if (user.role !== 'admin' && user.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    
+    // first get the current user email id
+    // now go through all the leave requests by the user and check if the user's(who submitted the leave request) parent role field contains the current user's email id
+    const leaves = await Leave.find()
+      .populate('userId', 'name email parent_role')
+      .sort({ submittedAt: -1 });
+      console.log("leaves",leaves);
+    const subordinateLeaves = leaves.filter(leave => {
+      return user.email === leave.userId.parent_role[0];
+    }
+    );
+    console.log("sub",subordinateLeaves);
+    res.json(subordinateLeaves);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch leave requests', error: error.message });
+  }
+});
+
 // Update leave request status (approve/reject)
 app.put('/api/leaves/:id', auth, async (req, res) => {
   try {
-    // First check if user is admin or manager
+    // First check if user is admin or superadmin
     const user = await User.findById(req.user.userId);
-    if (user.role !== 'admin' && user.role !== 'manager') {
+    if (user.role !== 'admin' && user.role !== 'superadmin') {
       return res.status(403).json({ message: 'Not authorized to update leave status' });
     }
     
