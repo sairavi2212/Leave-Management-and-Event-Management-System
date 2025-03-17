@@ -13,13 +13,6 @@ import {
 } from "@/components/ui/sidebar"
 
 import NavUser from "@/components/nav-user";
-import { useState , useEffect} from "react";
-
-interface User {
-  name: string;
-  email: string;
-  role: string;
-}
 
 // Menu items.
 const items = [
@@ -49,6 +42,11 @@ const items = [
     icon: Home,
   },
   {
+    title: "User Requests",
+    url: "admin",
+    icon: Home,
+  },
+  {
     title: "View Hierarchy",
     url: "hierarchy",
     icon: Home,
@@ -57,40 +55,6 @@ const items = [
 ]
 
 export function AppSidebar() {
-  const  [userData, setUserData] = useState<User>({name: "", email: "", role: ""});
-
-  const fetchUserData = async () => {
-    const token = localStorage.getItem('token');
-    try {
-      const response = await fetch('http://localhost:5000/api/user/profile', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUserData({ name: data.name, email: data.email, role: data.role });
-      }
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchUserData();
-  }, []);
-
-  if((userData.role === "admin" || userData.role === "superadmin") ) {
-    // push only if items dont contain this item
-    if(!items.some(e => e.title === "User Requests")){
-    items.push({
-      title: "User Requests",
-      url: "admin",
-      icon: Home,
-    
-    })
-  };
-  
   return (
     <Sidebar>
       <SidebarContent>
@@ -117,5 +81,4 @@ export function AppSidebar() {
       </SidebarFooter>
     </Sidebar>
   )
-  }
 }

@@ -271,11 +271,12 @@ app.get('/api/leaves', auth, async (req, res) => {
   }
 });
 
+// Get all leave requests (for managers/admin)
 app.get('/api/leaves/all', auth, async (req, res) => {
   try {
-    // First check if user is admin or superadmin
+    // First check if user is admin or manager
     const user = await User.findById(req.user.userId);
-    if (user.role !== 'admin' && user.role !== 'superadmin') {
+    if (user.role !== 'admin' && user.role !== 'manager') {
       return res.status(403).json({ message: 'Not authorized' });
     }
     
@@ -289,38 +290,12 @@ app.get('/api/leaves/all', auth, async (req, res) => {
   }
 });
 
-
-app.get('/api/leaves/subordinate', auth, async (req, res) => {
-  try {
-    // First check if user is admin or superadmin
-    const user = await User.findById(req.user.userId);
-    if (user.role !== 'admin' && user.role !== 'superadmin') {
-      return res.status(403).json({ message: 'Not authorized' });
-    }
-    
-    // first get the current user email id
-    // now go through all the leave requests by the user and check if the user's(who submitted the leave request) parent role field contains the current user's email id
-    const leaves = await Leave.find()
-      .populate('userId', 'name email parent_role')
-      .sort({ submittedAt: -1 });
-      console.log("leaves",leaves);
-    const subordinateLeaves = leaves.filter(leave => {
-      return user.email === leave.userId.parent_role[0];
-    }
-    );
-    console.log("sub",subordinateLeaves);
-    res.json(subordinateLeaves);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch leave requests', error: error.message });
-  }
-});
-
 // Update leave request status (approve/reject)
 app.put('/api/leaves/:id', auth, async (req, res) => {
   try {
-    // First check if user is admin or superadmin
+    // First check if user is admin or manager
     const user = await User.findById(req.user.userId);
-    if (user.role !== 'admin' && user.role !== 'superadmin') {
+    if (user.role !== 'admin' && user.role !== 'manager') {
       return res.status(403).json({ message: 'Not authorized to update leave status' });
     }
     
@@ -655,92 +630,51 @@ app.post('/api/reset-password/reset/:token', async (req, res) => {
   }
 });
 
-// Register User Endpoint (Admin/Superadmin Only)
-app.post('/api/register-user', auth, async (req, res) => {
+app.post('/api/events/create-event', auth, async (req, res) => {
   try {
-    const adminUser = await User.findById(req.user.userId);
-    // Allow if the user's role is either 'admin' or 'superadmin'
-    if (!adminUser || (adminUser.role !== 'admin' && adminUser.role !== 'superadmin')) {
-      return res.status(403).json({ message: 'Not authorized' });
+    var { title, description, start, end, image_blob, locations, projects, selected_dropdown } = req.body;
+    
+    // Basic validation
+    if (!title || !description || !start || !end) {
+      return res.status(400).json({ message: 'Missing required fields' });
     }
-    
-    const { name, email, role, age, project, parent_role, contact, location, password } = req.body;
-    
-    // Check if a user with the given email already exists
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: 'User with that email already exists' });
-    }
-    
-    // Create a new user; if no password is provided, default to an empty string.
-    const newUser = new User({
-      name,
-      email,
-      role,
-      age,
-      project,       // Assuming project is sent as an array
-      parent_role,   // Assuming parent_role is sent as an array
-      contact,
-      location,
-      password: password || ""  // Empty password indicates first-time login.
-    });
-    await newUser.save();
-    res.status(201).json({ message: 'User registered successfully' });
-  } catch (err) {
-    console.error("Error registering user:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
 
-
-// First Time Login Endpoint
-app.post('/api/first-time-login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    // Find the user by email
-    const user = await User.findOne({ email });
+    // Get the user who is creating the event
+    const user = await User.findById(req.user.userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
-    // Check if the user already has a password set (non-empty)
-    if (user.password && user.password.trim() !== "") {
-      return res.status(400).json({ message: 'Password is already set for this account' });
-    }
-    
-    // Hash the new password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    
-    // Update the user's password
-    user.password = hashedPassword;
-    await user.save();
-    
-    // Generate JWT token for the user
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-    
-    res.status(200).json({
-      message: 'Password set successfully',
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
+
+    // Create new event with empty comments array
+    const newEvent = new Event({
+      title,
+      description,
+      start: new Date(start),
+      end: new Date(end),
+      comments: [], // Initialize with empty comments array
+      selected_dropdown: selected_dropdown || 'General', // Default if not provided
+      image_blob: image_blob || 'No Image', // Default if not provided
+      locations: locations || [user.location], // Default to user's location if not specified
+      projects: projects || [],
+      // createdAt will use the default value (current time)
     });
-  } catch (err) {
-    console.error("Error in first time login:", err);
-    res.status(500).json({ message: "Server error" });
+    
+    console.log('New event:', newEvent, `saving...`);
+    
+
+    // Save the event to the database
+    await newEvent.save();
+    console.log(`saved.`)
+    
+    res.status(201).json({ 
+      message: 'Event created successfully', 
+      event: newEvent 
+    });
+  } catch (error) {
+    console.error('Error creating event:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
   }
 });
-
-
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

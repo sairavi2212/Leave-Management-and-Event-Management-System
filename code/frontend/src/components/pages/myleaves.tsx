@@ -278,7 +278,7 @@ const MyLeaves: React.FC = () => {
                 
                 <div>
                   <p className="text-sm text-muted-foreground">Reason for Leave</p>
-                  <p className="text-base bg-gray-800 p-3 rounded-md border border-gray-700 mt-1 text-gray-100">
+                  <p className="text-base bg-gray-50 p-3 rounded-md border mt-1">
                     {selectedLeave.reason}
                   </p>
                 </div>
@@ -299,7 +299,7 @@ const MyLeaves: React.FC = () => {
                     {selectedLeave.comments && (
                       <div>
                         <p className="text-sm text-muted-foreground">Comments</p>
-                        <p className="text-base bg-gray-800 p-3 rounded-md border border-gray-700 mt-1 text-gray-100">
+                        <p className="text-base bg-gray-50 p-3 rounded-md border mt-1">
                           {selectedLeave.comments}
                         </p>
                       </div>

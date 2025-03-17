@@ -21,10 +21,12 @@ export default function Email({
     Title,
     Email,
     Description,
+    Image,
 }: {
     Title: string;
     Email: string;
     Description: string;
+    Image: string;
 }) {
     const truncatedDescription =
         Description.length > 20
@@ -54,9 +56,6 @@ export default function Email({
                             width: "100%",
                         }}
                     >
-                        <p style={{ padding: "1.5rem" }}>
-                            {truncatedDescription}
-                        </p>
                         <div style={{ padding: "1rem" }}>
                             <Dialog>
                                 <DialogTrigger asChild>
@@ -72,7 +71,18 @@ export default function Email({
                                                 {Email}
                                             </DialogDescription>
                                         </DialogHeader>
-                                        <div style={{ padding: "1rem" }}>{Description}</div>
+                                        <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "1.5rem", overflow: "auto" }}>
+                                            <div>{Description}</div>
+                                            {Image && (
+                                                <div style={{ maxWidth: "100%", textAlign: "center" }}>
+                                                    <img 
+                                                        src={Image} 
+                                                        alt="Email attachment" 
+                                                        style={{ maxWidth: "100%", maxHeight: "60vh", objectFit: "contain" }} 
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </DialogContent>
                             </Dialog>

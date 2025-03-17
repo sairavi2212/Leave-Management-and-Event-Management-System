@@ -5,10 +5,17 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 interface Event {
-    _id: string;
+    _id?: string;
     title: string;
-    email: string;
     description: string;
+    start: Date;
+    end: Date;
+    createdAt?: Date;
+    comments: Comment[];
+    selected_dropdown: string;
+    image_blob?: string;
+    locations: string[];
+    projects: string[];
 }
 
 export default function EmailList() {
@@ -54,8 +61,9 @@ export default function EmailList() {
                         <div key={event._id} className="p-4">
                             <Email
                                 Title={event.title}
-                                Email={event.email}
+                                Email={event.title} // Assuming 'event.title' can be used as the 'Email' prop
                                 Description={event.description}
+                                Image={event.image_blob || ""}
                             />
                         </div>
                     ))
