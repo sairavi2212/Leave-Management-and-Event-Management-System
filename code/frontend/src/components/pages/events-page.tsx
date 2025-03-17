@@ -1,8 +1,36 @@
 import Layout from "@/components/layout.tsx";
 import EmailList from "@/components/email-list";
 import CreateEmail from "@/components/create-email-dialog";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 export default function EventsPage() {
+
+    const [superUser, setSuperUser] = useState("");
+
+    const checkSuperUser = () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            return;
+        }
+
+        axios.get("http://localhost:5000/api/user/profile", {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(response => {
+            setSuperUser(response.data.role);
+        })
+        .catch(error => {
+            console.error("There was an error fetching the user!", error);
+        });
+    }
+
+    useEffect(() => {
+        checkSuperUser();
+    }, []);
+
     return (
         <Layout>
             <div
@@ -20,7 +48,7 @@ export default function EventsPage() {
                         justifyContent: "right",
                     }}
                 >
-                    <CreateEmail />
+                    {superUser === "admin" && <CreateEmail />}
                 </div>
                 <EmailList />
             </div>
