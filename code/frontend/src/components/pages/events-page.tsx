@@ -7,6 +7,7 @@ import axios from "axios";
 export default function EventsPage() {
 
     const [superUser, setSuperUser] = useState("");
+    const [state, setState] = useState("loading");
 
     const checkSuperUser = () => {
         const token = localStorage.getItem('token');
@@ -21,9 +22,11 @@ export default function EventsPage() {
         })
         .then(response => {
             setSuperUser(response.data.role);
+            console.log(`superuser ${response.data.firstName} ${response.data.lastName} found! `)
+            setState("loaded");
         })
         .catch(error => {
-            console.error("There was an error fetching the user!", error);
+            console.error("There was an error fetching the user!",error);
         });
     }
 
@@ -32,6 +35,8 @@ export default function EventsPage() {
     }, []);
 
     return (
+        <>
+        {state === "loaded" &&
         <Layout>
             <div
                 style={{
@@ -52,6 +57,7 @@ export default function EventsPage() {
                 </div>
                 <EmailList />
             </div>
-        </Layout>
+        </Layout>}
+        </>
     );
 }
