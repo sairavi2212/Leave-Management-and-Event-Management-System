@@ -6,6 +6,7 @@ import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterv
 import { CalendarIcon, CheckCircle2, LoaderCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import Layout from "@/components/layout";
 import { useSidebar } from '@/components/ui/sidebar';
+import { DatePicker } from "@/components/date-picker"; // Add this import
 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -177,10 +178,7 @@ const formSchema = z.object({
 
 const Leaves: React.FC = () => {
 
-
-
     let isSidebarOpen = false;
-
     try {
         // Try to get the sidebar context safely
         const context = useSidebar();
@@ -191,8 +189,6 @@ const Leaves: React.FC = () => {
     }
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
-    const [showStartCalendar, setShowStartCalendar] = useState(false);
-    const [showEndCalendar, setShowEndCalendar] = useState(false);
     const [leaveDuration, setLeaveDuration] = useState<number | null>(null);
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -216,6 +212,7 @@ const Leaves: React.FC = () => {
         }
     }, [form.watch('startDate'), form.watch('endDate')]);
 
+<<<<<<< HEAD
     // Close calendars when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -243,6 +240,19 @@ const Leaves: React.FC = () => {
                 status: "pending",
                 submittedAt: new Date().toISOString(),
             };
+=======
+   // Update your onSubmit function with this improved version
+async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
+    try {
+        const formattedData = {
+            ...values,
+            startDate: format(values.startDate, "yyyy-MM-dd"),
+            endDate: format(values.endDate, "yyyy-MM-dd"),
+            status: "pending",
+            submittedAt: new Date().toISOString(),
+        };
+>>>>>>> d6654ca64e65aaf542fb62d4a093ccd35751b8b4
 
             const response = await fetch('http://localhost:5000/api/leaves', {
                 method: 'POST',
@@ -252,6 +262,12 @@ const Leaves: React.FC = () => {
                 },
                 body: JSON.stringify(formattedData),
             });
+<<<<<<< HEAD
+=======
+            setLeaveDuration(null);
+            setSubmitted(false);
+        }, 3000);
+>>>>>>> d6654ca64e65aaf542fb62d4a093ccd35751b8b4
 
             if (!response.ok) {
                 const errorData = await response.json();
@@ -284,8 +300,8 @@ const Leaves: React.FC = () => {
 
     return (
         <Layout>
-            <div className={`py-8 px-120 flex justify-center`}>
-                <div className={`w-full`}>
+            <div className={`py-5 px-120 flex justify-center`}>
+                <div className={`w-full max-w-5xl`}>
                     <Card className="shadow-xl bg-[#1e293b] border-0 text-white">
                         <CardHeader className="pb-6 pt-8 border-b border-gray-700">
                             <CardTitle className="text-2xl font-medium text-center text-white">
@@ -344,50 +360,22 @@ const Leaves: React.FC = () => {
                                                 name="startDate"
                                                 render={({ field }) => (
                                                     <FormItem className="relative">
-                                                        <FormLabel className="text-base text-gray-200">Start Date</FormLabel>
-                                                        <div className="calendar-wrapper">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    setShowStartCalendar(!showStartCalendar);
-                                                                    setShowEndCalendar(false);
-                                                                }}
-                                                                className="h-12 w-full flex items-center justify-between px-4 bg-[#2d3748] border border-gray-700 text-white rounded-md hover:bg-[#3b4758]"
-                                                            >
-                                                                <span>
-                                                                    {field.value ? (
-                                                                        format(field.value, "EEEE, MMMM d, yyyy")
-                                                                    ) : (
-                                                                        "Pick a start date"
-                                                                    )}
-                                                                </span>
-                                                                <CalendarIcon className="h-5 w-5 opacity-50" />
-                                                            </button>
-
-                                                            {showStartCalendar && (
-                                                                <div className="absolute z-50 mt-2 calendar-wrapper">
-                                                                    <TailwindCalendar
-                                                                        selected={field.value || undefined}
-                                                                        onSelect={(date) => {
-                                                                            field.onChange(date);
-                                                                            setShowStartCalendar(false);
-                                                                            // Reset end date if it's before new start date
-                                                                            const endDate = form.getValues("endDate");
-                                                                            if (endDate && date > endDate) {
-                                                                                form.setValue("endDate", null as any);
-                                                                            }
-                                                                        }}
-                                                                        disabledDates={(date) => {
-                                                                            const today = new Date();
-                                                                            today.setHours(0, 0, 0, 0);
-                                                                            return date < today;
-                                                                        }}
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <FormMessage className="text-red-400" />
-                                                    </FormItem>
+                                                    <FormLabel className="text-base text-gray-200">Start Date</FormLabel>
+                                                    <FormControl>
+                                                        <DatePicker 
+                                                            date={field.value} 
+                                                            setDate={(date) => {
+                                                                field.onChange(date);
+                                                                // Reset end date if it's before new start date
+                                                                const endDate = form.getValues("endDate");
+                                                                if (endDate && date > endDate) {
+                                                                    form.setValue("endDate", null as any);
+                                                                }
+                                                            }} 
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage className="text-red-400" />
+                                                </FormItem>
                                                 )}
                                             />
                                             <FormField
@@ -395,47 +383,15 @@ const Leaves: React.FC = () => {
                                                 name="endDate"
                                                 render={({ field }) => (
                                                     <FormItem className="relative">
-                                                        <FormLabel className="text-base text-gray-200">End Date</FormLabel>
-                                                        <div className="calendar-wrapper">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    setShowEndCalendar(!showEndCalendar);
-                                                                    setShowStartCalendar(false);
-                                                                }}
-                                                                className="h-12 w-full flex items-center justify-between px-4 bg-[#2d3748] border border-gray-700 text-white rounded-md hover:bg-[#3b4758]"
-                                                                disabled={!form.watch('startDate')}
-                                                            >
-                                                                <span>
-                                                                    {field.value ? (
-                                                                        format(field.value, "EEEE, MMMM d, yyyy")
-                                                                    ) : (
-                                                                        "Pick an end date"
-                                                                    )}
-                                                                </span>
-                                                                <CalendarIcon className="h-5 w-5 opacity-50" />
-                                                            </button>
-
-                                                            {showEndCalendar && (
-                                                                <div className="absolute z-50 mt-2 calendar-wrapper">
-                                                                    <TailwindCalendar
-                                                                        selected={field.value || undefined}
-                                                                        onSelect={(date) => {
-                                                                            field.onChange(date);
-                                                                            setShowEndCalendar(false);
-                                                                        }}
-                                                                        disabledDates={(date) => {
-                                                                            const startDate = form.getValues("startDate");
-                                                                            if (!startDate) return true;
-                                                                            return date < startDate;
-                                                                        }}
-                                                                        minDate={form.watch('startDate')}
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <FormMessage className="text-red-400" />
-                                                    </FormItem>
+                                                    <FormLabel className="text-base text-gray-200">End Date</FormLabel>
+                                                    <FormControl>
+                                                        <DatePicker 
+                                                            date={field.value}
+                                                            setDate={(date) => field.onChange(date)}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage className="text-red-400" />
+                                                </FormItem>
                                                 )}
                                             />
                                         </div>
@@ -483,8 +439,6 @@ const Leaves: React.FC = () => {
                                                 type="button"
                                                 onClick={() => {
                                                     form.reset();
-                                                    setShowStartCalendar(false);
-                                                    setShowEndCalendar(false);
                                                 }}
                                                 className="h-12 px-7 text-base bg-transparent border border-gray-600 text-gray-200 rounded-md hover:bg-gray-700 hover:text-white"
                                             >

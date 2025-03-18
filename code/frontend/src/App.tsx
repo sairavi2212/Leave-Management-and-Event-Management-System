@@ -26,7 +26,7 @@ function App() {
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/leaves" element={<Leaves />} />
                     <Route path="/myleaves" element={<MyLeaves />} />
-                    <Route path ="/admin" element={<AdminLeaves />} />
+                    <Route path="/admin" element={<AdminLeaves />} />
                     <Route path="/hierarchy" element={<HierarchyTree />} />
                     <Route path="/leave-report" element={<LeaveReport />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />

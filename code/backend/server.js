@@ -232,6 +232,85 @@ app.get('/api/projects/recent', auth,async (req, res) => {
   }
 });
 
+// Get all projects
+app.get('/api/projects', async (req, res) => {
+  try {
+    const { authorization } = req.headers;
+    if (!authorization) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    const token = authorization.replace('Bearer ', '');
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(payload.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Find projects where user is either a manager or team member
+    const projects = await Project.find({
+      $or: [
+        { manager: user.name },
+        { users: user.name }
+      ]
+    }).sort({ createdAt: -1 });
+
+    res.json(projects);
+  } catch (error) {
+    console.error('Error fetching projects:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+app.post('/api/projects/create', auth, async (req, res) => {
+  try {
+    const { name, description, status, users, manager, startDate, endDate } = req.body;
+    
+    // Basic validation
+    if (!name || !description || !status || !users || !manager || !startDate || !endDate) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Get the user who is creating the project
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if user has admin privileges
+    if (user.role !== 'admin' && user.role !== 'superadmin') {
+      return res.status(403).json({ message: 'Not authorized to create projects' });
+    }
+
+    // Create new project
+    const newProject = new Project({
+      name,
+      description,
+      status,
+      users,
+      manager,
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      // createdAt will use the default value (current time)
+    });
+    
+    console.log('New project:', newProject, 'saving...');
+    
+    // Save the project to the database
+    await newProject.save();
+    console.log('Project saved successfully');
+    
+    res.status(201).json({ 
+      message: 'Project created successfully', 
+      project: newProject 
+    });
+  } catch (error) {
+    console.error('Error creating project:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+});
+
 // Leave Management Routes
 
 // Submit a leave request
@@ -303,12 +382,10 @@ app.get('/api/leaves/subordinate', auth, async (req, res) => {
     const leaves = await Leave.find()
       .populate('userId', 'name email parent_role')
       .sort({ submittedAt: -1 });
-      console.log("leaves",leaves);
     const subordinateLeaves = leaves.filter(leave => {
       return user.email === leave.userId.parent_role[0];
     }
     );
-    console.log("sub",subordinateLeaves);
     res.json(subordinateLeaves);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch leave requests', error: error.message });
@@ -455,8 +532,7 @@ app.get('/api/leaves/report', auth, async (req, res) => {
       const token = authorization.replace('Bearer ', '');
       const payload = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findById(payload.userId);
-
-      if (!user || user.role !== 'admin') {
+      if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
           return res.status(403).json({ message: 'Not authorized' });
       }
       const { month, year } = req.query;
@@ -467,13 +543,40 @@ app.get('/api/leaves/report', auth, async (req, res) => {
       const endDate = new Date(yearNum, monthNum, 0);
       // now group all the leaves whose start date and end date is within the given month and then group them by the userId and then group them by leave type and then sum the duration
       const report = {}
+      const location_user = user.location;
       const all_leaves = await Leave.find({
           startDate: { $gte: startDate },
           endDate: { $lte: endDate },
           status: 'approved'
       });
 
-      for (const leave of all_leaves){
+      // take only those leaves which are submitted by users of the same location as the admin
+
+      if(user.role == 'admin'){ 
+        const filtered_leaves = all_leaves.filter(leave => {
+            return leave.userId.location === location_user ;
+        });
+        console.log(filtered_leaves);
+        for (const leave of filtered_leaves){
+            if (!report[leave.userId]){
+                report[leave.userId] = {}
+            }
+            if (!report[leave.userId][leave.leaveType]){
+                report[leave.userId][leave.leaveType] = 0
+            }
+            report[leave.userId][leave.leaveType] += leave.duration
+        }
+        const final_report = {}
+        // in final report instead of userId just keep the user name by fetching it from the user collection
+        for (const userId in report){
+            const user = await User.findById(userId);
+            final_report[user.name] = report[userId]
+        }
+        res.json(final_report);
+      }
+      else if(user.role == 'superadmin'){
+        console.log("hii");
+        for (const leave of all_leaves){
           if (!report[leave.userId]){
               report[leave.userId] = {}
           }
@@ -481,14 +584,16 @@ app.get('/api/leaves/report', auth, async (req, res) => {
               report[leave.userId][leave.leaveType] = 0
           }
           report[leave.userId][leave.leaveType] += leave.duration
+        }
+        const final_report = {}
+        // in final report instead of userId just keep the user name by fetching it from the user collection
+        for (const userId in report){
+            const user = await User.findById(userId);
+            final_report[user.name] = report[userId]
+        }
+        res.json(final_report);
       }
-      const final_report = {}
-      // in final report instead of userId just keep the user name by fetching it from the user collection
-      for (const userId in report){
-          const user = await User.findById(userId);
-          final_report[user.name] = report[userId]
-      }
-      res.json(final_report);
+
   } catch (error) {
       console.error('Error generating leave report:', error);
       res.status(500).json({ message: 'Error generating leave report' });

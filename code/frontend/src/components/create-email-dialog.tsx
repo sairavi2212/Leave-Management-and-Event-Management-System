@@ -24,7 +24,7 @@ import { CalendarIcon, Send } from "lucide-react";
 import axios from "axios";
 import { format } from "date-fns";
 
-var Branches = ["Hoshangabad", "Lucknow", "Asgard", "TVA", "Arkham City", "Location1"];
+var Branches = ["Hoshangabad", "Lucknow", "Asgard", "TVA", "Arkham City", "Location1","Bhopal"];
 var Teams = ["Tech Team", "Marketing Team", "Sales Team", "HR Team", "Finance Team"];
 
 interface Comment {

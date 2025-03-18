@@ -113,6 +113,13 @@ const HomePage: React.FC = () => {
                         >
                             My Leaves
                         </Button>
+                        <Button
+                            variant="ghost"
+                            className="w-full justify-start"
+                            onClick={() => navigate('/leave-report')}
+                        >
+                            Leave Report
+                        </Button>
                         
                         <Button
                             variant="ghost"
@@ -121,19 +128,13 @@ const HomePage: React.FC = () => {
                         >
                             User Requests
                         </Button>
+
                         <Button
                             variant="ghost"
                             className="w-full justify-start"
-                            onClick={() => navigate('/hierarchy')}
+                            onClick={() => navigate('/register-user')}
                         >
-                            View Hierarchy
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            className="w-full justify-start"
-                            onClick={() => navigate('/leave-report')}
-                        >
-                            Leave Report
+                            Register User
                         </Button>
                     </nav>
                 </div>

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CheckCircle, Edit, User, Loader } from 'lucide-react';
 import axios from 'axios';
+import Layout from '../layout';
 
 const Profile: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
@@ -121,7 +122,13 @@ const Profile: React.FC = () => {
     }
 
     return (
-        <div className="flex justify-center items-center min-h-screen bg-zinc-900 p-4">
+        <Layout>
+        <div style={{
+                    paddingLeft: '65vh',
+                    paddingRight: '0vh',
+                    width: '150vh',
+                    height: '40vh',
+                }}>
             <Card className="w-full max-w-md border-zinc-800 bg-zinc-800/50 text-white shadow-xl">
                 <CardHeader className="pb-4">
                     <div className="flex flex-col items-center gap-4">
@@ -286,6 +293,7 @@ const Profile: React.FC = () => {
                 </CardContent>
             </Card>
         </div>
+        </Layout>
     );
 };
 

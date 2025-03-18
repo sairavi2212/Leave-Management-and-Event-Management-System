@@ -14,6 +14,7 @@ import {
 
 import NavUser from "@/components/nav-user";
 import { useState , useEffect} from "react";
+import e from "express";
 
 interface User {
   name: string;
@@ -49,11 +50,10 @@ const items = [
     icon: Home,
   },
   {
-    title: "View Hierarchy",
-    url: "hierarchy",
+    title: "Leave Report",
+    url: "leave-report",
     icon: Home,
   }
-
 ]
 
 export function AppSidebar() {
@@ -81,15 +81,24 @@ export function AppSidebar() {
   }, []);
 
   if((userData.role === "admin" || userData.role === "superadmin") ) {
-    // push only if items dont contain this item
     if(!items.some(e => e.title === "User Requests")){
-    items.push({
-      title: "User Requests",
-      url: "admin",
-      icon: Home,
-    
-    })
-  };
+      items.push({
+        title: "User Requests",
+        url: "admin",
+        icon: Home,
+      })
+    }
+  }
+
+  if(userData.role === "superadmin") {
+    if(!items.some(e => e.title === "Register User")){
+      items.push({
+        title: "Register User",
+        url: "register-user",
+        icon: Home,
+      })
+    }
+  }
   
   return (
     <Sidebar>
@@ -117,5 +126,4 @@ export function AppSidebar() {
       </SidebarFooter>
     </Sidebar>
   )
-  }
 }

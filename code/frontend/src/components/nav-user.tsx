@@ -36,7 +36,7 @@ export default function NavUser() {
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    setUserData({ name: data.name, email: data.email });
+                    setUserData({ name: data.firstName, email: data.email });
                 }
             } catch (error) {
                 console.error('Error fetching user data:', error);
@@ -56,10 +56,11 @@ export default function NavUser() {
                 <DropdownMenu>
                     <DropdownMenuTrigger>
                         <SidebarMenuButton
-                            size="lg"
+                            // size="lg"
+                            style={{ width: "27vh" , height: "7vh"}}
                             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                         >
-                            <Avatar className="h-8 w-8 rounded-lg">
+                            <Avatar className="h-10 w-10 rounded-lg">
                                 <AvatarImage src="" alt={userData.name} />
                                 <AvatarFallback className="rounded-lg">
                                     <UserRound />
