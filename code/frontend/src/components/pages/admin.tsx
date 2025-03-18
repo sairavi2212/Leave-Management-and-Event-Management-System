@@ -211,8 +211,8 @@ const AdminLeaves: React.FC = () => {
       if (!searchQuery) return true;
       
       const searchLower = searchQuery.toLowerCase();
-      const userName = leave.user?.name?.toLowerCase() || '';
-      const userEmail = leave.user?.email?.toLowerCase() || '';
+      const userName = leave.userId.name?.toLowerCase() || '';
+      const userEmail = leave.userId.email?.toLowerCase() || '';
       const leaveType = getLeaveTypeName(leave.leaveType).toLowerCase();
       
       return userName.includes(searchLower) || 
