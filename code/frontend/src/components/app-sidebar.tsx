@@ -48,12 +48,16 @@ const items = [
     url: "myleaves",
     icon: Home,
   },
+  // {
+  //   title: "View Hierarchy",
+  //   url: "hierarchy",
+  //   icon: Home,
+  // }
   {
-    title: "View Hierarchy",
-    url: "hierarchy",
+    title: "Leave Report",
+    url: "leave-report",
     icon: Home,
   }
-
 ]
 
 export function AppSidebar() {

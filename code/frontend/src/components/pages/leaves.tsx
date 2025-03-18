@@ -281,8 +281,8 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
 
     return (
         <Layout>
-            <div className={`py-8 px-120 flex justify-center`}>
-                <div className={`w-full`}>
+            <div className={`py-5 px-120 flex justify-center`}>
+                <div className={`w-full max-w-5xl`}>
                     <Card className="shadow-xl bg-[#1e293b] border-0 text-white">
                         <CardHeader className="pb-6 pt-8 border-b border-gray-700">
                             <CardTitle className="text-2xl font-medium text-center text-white">
