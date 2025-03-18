@@ -232,55 +232,55 @@ const Leaves: React.FC = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [showStartCalendar, showEndCalendar]);
 
-   // Update your onSubmit function with this improved version
-async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true);
-    try {
-        const formattedData = {
-            ...values,
-            startDate: format(values.startDate, "yyyy-MM-dd"),
-            endDate: format(values.endDate, "yyyy-MM-dd"),
-            status: "pending",
-            submittedAt: new Date().toISOString(),
-        };
+    // Update your onSubmit function with this improved version
+    async function onSubmit(values: z.infer<typeof formSchema>) {
+        setIsSubmitting(true);
+        try {
+            const formattedData = {
+                ...values,
+                startDate: format(values.startDate, "yyyy-MM-dd"),
+                endDate: format(values.endDate, "yyyy-MM-dd"),
+                status: "pending",
+                submittedAt: new Date().toISOString(),
+            };
 
-        const response = await fetch('http://localhost:5000/api/leaves', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify(formattedData),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to submit leave request');
-        }
-
-        setSubmitted(true);
-        
-        // Improved form reset logic
-        setTimeout(() => {
-            form.reset({
-                leaveType: undefined,
-                startDate: undefined,
-                endDate: undefined,
-                reason: "",
+            const response = await fetch('http://localhost:5000/api/leaves', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(formattedData),
             });
-            setLeaveDuration(null);
-            setShowStartCalendar(false);
-            setShowEndCalendar(false);
-            setSubmitted(false);
-        }, 3000);
 
-    } catch (error) {
-        console.error("Error submitting form:", error);
-        alert("Failed to submit leave application. Please try again.");
-    } finally {
-        setIsSubmitting(false);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to submit leave request');
+            }
+
+            setSubmitted(true);
+
+            // Improved form reset logic
+            setTimeout(() => {
+                form.reset({
+                    leaveType: undefined,
+                    startDate: undefined,
+                    endDate: undefined,
+                    reason: "",
+                });
+                setLeaveDuration(null);
+                setShowStartCalendar(false);
+                setShowEndCalendar(false);
+                setSubmitted(false);
+            }, 3000);
+
+        } catch (error) {
+            console.error("Error submitting form:", error);
+            alert("Failed to submit leave application. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
     }
-}
 
     return (
         <Layout>

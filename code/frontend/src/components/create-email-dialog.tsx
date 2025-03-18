@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
     Dialog,
     DialogContent,
@@ -18,11 +18,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { DatePicker } from "@/components/date-picker";
+import { TailwindCalendar } from "@/components/date-picker";
 import UploadImage from "@/components/upload-image";
 import { CalendarIcon, Send } from "lucide-react";
 import axios from "axios";
-import { useEffect } from "react";
+import { format } from "date-fns";
 
 var Branches = ["Hoshangabad", "Lucknow", "Asgard", "TVA", "Arkham City", "Location1"];
 var Teams = ["Tech Team", "Marketing Team", "Sales Team", "HR Team", "Finance Team"];
@@ -61,6 +61,31 @@ export default function CreateEmail() {
     const [selectedDropdown, setSelectedDropdown] = useState<string>("");
     const [locations, setLocations] = useState<string[]>([]);
     const [projects, setProjects] = useState<string[]>([]);
+    const [showStartCalendar, setShowStartCalendar] = useState(false);
+    const [showEndCalendar, setShowEndCalendar] = useState(false);
+    
+    // Reference to detect outside clicks
+    const startCalendarRef = useRef<HTMLDivElement>(null);
+    const endCalendarRef = useRef<HTMLDivElement>(null);
+
+    // Close calendars when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (showStartCalendar && 
+                startCalendarRef.current && 
+                !startCalendarRef.current.contains(event.target as Node)) {
+                setShowStartCalendar(false);
+            }
+            if (showEndCalendar && 
+                endCalendarRef.current && 
+                !endCalendarRef.current.contains(event.target as Node)) {
+                setShowEndCalendar(false);
+            }
+        };
+        
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showStartCalendar, showEndCalendar]);
 
     // Handle branch selection
     const handleBranchChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -196,13 +221,78 @@ export default function CreateEmail() {
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="space-y-2">
+                                <div className="space-y-2 relative">
                                     <CardDescription>Start Date</CardDescription>
-                                    <DatePicker date={start} setDate={setStart} />
+                                    <div ref={startCalendarRef}>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setShowStartCalendar(!showStartCalendar);
+                                                setShowEndCalendar(false);
+                                            }}
+                                            className="h-10 w-full flex items-center justify-between px-4 bg-white border border-gray-300 text-gray-800 rounded-md hover:bg-gray-50"
+                                        >
+                                            <span>
+                                                {format(start, "MMMM d, yyyy")}
+                                            </span>
+                                            <CalendarIcon className="h-5 w-5 opacity-70" />
+                                        </button>
+                                        
+                                        {showStartCalendar && (
+                                            <div className="absolute z-50 mt-2">
+                                                <TailwindCalendar 
+                                                    selected={start}
+                                                    onSelect={(date) => {
+                                                        setStart(date);
+                                                        setShowStartCalendar(false);
+                                                        // If end date is before new start date, update end date
+                                                        if (date > end) {
+                                                            setEnd(date);
+                                                        }
+                                                    }}
+                                                    disabledDates={(date) => {
+                                                        const today = new Date();
+                                                        today.setHours(0, 0, 0, 0);
+                                                        return date < today;
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-2 relative">
                                     <CardDescription>End Date</CardDescription>
-                                    <DatePicker date={end} setDate={setEnd} />
+                                    <div ref={endCalendarRef}>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setShowEndCalendar(!showEndCalendar);
+                                                setShowStartCalendar(false);
+                                            }}
+                                            className="h-10 w-full flex items-center justify-between px-4 bg-white border border-gray-300 text-gray-800 rounded-md hover:bg-gray-50"
+                                        >
+                                            <span>
+                                                {format(end, "MMMM d, yyyy")}
+                                            </span>
+                                            <CalendarIcon className="h-5 w-5 opacity-70" />
+                                        </button>
+                                        
+                                        {showEndCalendar && (
+                                            <div className="absolute z-50 mt-2">
+                                                <TailwindCalendar 
+                                                    selected={end}
+                                                    onSelect={(date) => {
+                                                        setEnd(date);
+                                                        setShowEndCalendar(false);
+                                                    }}
+                                                    disabledDates={(date) => {
+                                                        // Disable dates before start date
+                                                        return date < start;
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
