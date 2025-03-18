@@ -455,8 +455,7 @@ app.get('/api/leaves/report', auth, async (req, res) => {
       const token = authorization.replace('Bearer ', '');
       const payload = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findById(payload.userId);
-
-      if (!user || user.role !== 'admin') {
+      if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
           return res.status(403).json({ message: 'Not authorized' });
       }
       const { month, year } = req.query;
@@ -467,13 +466,40 @@ app.get('/api/leaves/report', auth, async (req, res) => {
       const endDate = new Date(yearNum, monthNum, 0);
       // now group all the leaves whose start date and end date is within the given month and then group them by the userId and then group them by leave type and then sum the duration
       const report = {}
+      const location_user = user.location;
       const all_leaves = await Leave.find({
           startDate: { $gte: startDate },
           endDate: { $lte: endDate },
           status: 'approved'
       });
 
-      for (const leave of all_leaves){
+      // take only those leaves which are submitted by users of the same location as the admin
+
+      if(user.role == 'admin'){ 
+        const filtered_leaves = all_leaves.filter(leave => {
+            return leave.userId.location === location_user ;
+        });
+        console.log(filtered_leaves);
+        for (const leave of filtered_leaves){
+            if (!report[leave.userId]){
+                report[leave.userId] = {}
+            }
+            if (!report[leave.userId][leave.leaveType]){
+                report[leave.userId][leave.leaveType] = 0
+            }
+            report[leave.userId][leave.leaveType] += leave.duration
+        }
+        const final_report = {}
+        // in final report instead of userId just keep the user name by fetching it from the user collection
+        for (const userId in report){
+            const user = await User.findById(userId);
+            final_report[user.name] = report[userId]
+        }
+        res.json(final_report);
+      }
+      else if(user.role == 'superadmin'){
+        console.log("hii");
+        for (const leave of all_leaves){
           if (!report[leave.userId]){
               report[leave.userId] = {}
           }
@@ -481,14 +507,16 @@ app.get('/api/leaves/report', auth, async (req, res) => {
               report[leave.userId][leave.leaveType] = 0
           }
           report[leave.userId][leave.leaveType] += leave.duration
+        }
+        const final_report = {}
+        // in final report instead of userId just keep the user name by fetching it from the user collection
+        for (const userId in report){
+            const user = await User.findById(userId);
+            final_report[user.name] = report[userId]
+        }
+        res.json(final_report);
       }
-      const final_report = {}
-      // in final report instead of userId just keep the user name by fetching it from the user collection
-      for (const userId in report){
-          const user = await User.findById(userId);
-          final_report[user.name] = report[userId]
-      }
-      res.json(final_report);
+
   } catch (error) {
       console.error('Error generating leave report:', error);
       res.status(500).json({ message: 'Error generating leave report' });

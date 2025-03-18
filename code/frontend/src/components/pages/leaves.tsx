@@ -177,10 +177,7 @@ const formSchema = z.object({
 
 const Leaves: React.FC = () => {
 
-
-
     let isSidebarOpen = false;
-
     try {
         // Try to get the sidebar context safely
         const context = useSidebar();
