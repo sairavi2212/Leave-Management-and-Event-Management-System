@@ -310,8 +310,8 @@ const AdminLeaves: React.FC = () => {
                             <User className="h-4 w-4 text-gray-500" />
                           </div>
                           <div>
-                            <div className="font-medium">{leave.user?.name || 'Employee'}</div>
-                            <div className="text-sm text-muted-foreground">{leave.user?.email}</div>
+                            <div className="font-medium">{leave.userId.name || 'Employee'}</div>
+                            <div className="text-sm text-muted-foreground">{leave.userId.email}</div>
                           </div>
                         </div>
                       </TableCell>
@@ -383,8 +383,8 @@ const AdminLeaves: React.FC = () => {
                 
                 <div>
                   <p className="text-sm text-muted-foreground">Employee</p>
-                  <p className="text-base font-medium">{selectedLeave.user?.name || 'Employee'}</p>
-                  <p className="text-sm text-muted-foreground">{selectedLeave.user?.email}</p>
+                  <p className="text-base font-medium">{selectedLeave.userId.name || 'Employee'}</p>
+                  <p className="text-sm text-muted-foreground">{selectedLeave.userId.email}</p>
                 </div>
                 
                 <Separator />
@@ -504,7 +504,7 @@ const AdminLeaves: React.FC = () => {
                       <FormControl>
                         <Textarea 
                           placeholder={actionType === 'approve' 
-                            ? "Any notes for the employee (optional)" 
+                            ? "Any notes for the employee (required)" 
                             : "Please provide rejection reason"} 
                           {...field} 
                           className="min-h-[100px]"

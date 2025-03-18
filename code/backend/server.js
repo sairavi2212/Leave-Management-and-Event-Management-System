@@ -303,12 +303,10 @@ app.get('/api/leaves/subordinate', auth, async (req, res) => {
     const leaves = await Leave.find()
       .populate('userId', 'name email parent_role')
       .sort({ submittedAt: -1 });
-      console.log("leaves",leaves);
     const subordinateLeaves = leaves.filter(leave => {
       return user.email === leave.userId.parent_role[0];
     }
     );
-    console.log("sub",subordinateLeaves);
     res.json(subordinateLeaves);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch leave requests', error: error.message });
