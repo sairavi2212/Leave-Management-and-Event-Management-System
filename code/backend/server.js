@@ -630,6 +630,51 @@ app.post('/api/reset-password/reset/:token', async (req, res) => {
   }
 });
 
+app.post('/api/events/create-event', auth, async (req, res) => {
+  try {
+    var { title, description, start, end, image_blob, locations, projects, selected_dropdown } = req.body;
+    
+    // Basic validation
+    if (!title || !description || !start || !end) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Get the user who is creating the event
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Create new event with empty comments array
+    const newEvent = new Event({
+      title,
+      description,
+      start: new Date(start),
+      end: new Date(end),
+      comments: [], // Initialize with empty comments array
+      selected_dropdown: selected_dropdown || 'General', // Default if not provided
+      image_blob: image_blob || 'No Image', // Default if not provided
+      locations: locations || [user.location], // Default to user's location if not specified
+      projects: projects || [],
+      // createdAt will use the default value (current time)
+    });
+    
+    console.log('New event:', newEvent, `saving...`);
+    
+
+    // Save the event to the database
+    await newEvent.save();
+    console.log(`saved.`)
+    
+    res.status(201).json({ 
+      message: 'Event created successfully', 
+      event: newEvent 
+    });
+  } catch (error) {
+    console.error('Error creating event:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -31,7 +31,7 @@ const EventsSchema = new mongoose.Schema({
     },
     image_blob: {
         type: String,
-        required: true,
+        required: false,
     },
     locations: {
         type: Array,

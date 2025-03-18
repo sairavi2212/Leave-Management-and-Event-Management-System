@@ -10,6 +10,7 @@ import AdminLeaves from "./components/pages/admin";
 import HierarchyTree from "./components/pages/hierarchy";
 import LeaveReport from "./components/pages/leave_report";
 import ResetPasswordPage from "./components/pages/passwordreset";
+import TestPage from "./components/pages/test";
 
 function App() {
     return (
@@ -23,10 +24,11 @@ function App() {
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/leaves" element={<Leaves />} />
                     <Route path="/myleaves" element={<MyLeaves />} />
-                    <Route path ="/admin" element={<AdminLeaves />} />"
+                    <Route path ="/admin" element={<AdminLeaves />} />
                     <Route path="/hierarchy" element={<HierarchyTree />} />
                     <Route path="/leave-report" element={<LeaveReport />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
+                    <Route path="/test" element={<TestPage />} />
                 </Routes>
             </Router>
         </>
