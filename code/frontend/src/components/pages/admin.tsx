@@ -38,7 +38,7 @@ interface User {
 
 interface Leave {
   _id: string;
-  userId: string;
+  userId: User;
   user?: User;
   leaveType: string;
   startDate: string;
@@ -211,7 +211,7 @@ const AdminLeaves: React.FC = () => {
       if (!searchQuery) return true;
       
       const searchLower = searchQuery.toLowerCase();
-      const userName = leave.userId.name?.toLowerCase() || '';
+      const userName = leave.userId?.name?.toLowerCase() || '';
       const userEmail = leave.userId.email?.toLowerCase() || '';
       const leaveType = getLeaveTypeName(leave.leaveType).toLowerCase();
       
