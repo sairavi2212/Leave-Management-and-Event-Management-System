@@ -12,6 +12,7 @@ import LeaveReport from "./components/pages/leave_report";
 import ResetPasswordPage from "./components/pages/passwordreset";
 import RegisterUser from "./components/pages/RegisterUser";
 import FirstTimeLogin from "./components/pages/FirstTimeLogin";
+import ProjectsPage from "@/components/pages/projects-page";
 
 function App() {
     return (
@@ -25,13 +26,13 @@ function App() {
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/leaves" element={<Leaves />} />
                     <Route path="/myleaves" element={<MyLeaves />} />
-                    <Route path ="/admin" element={<AdminLeaves />} />
+                    <Route path="/admin" element={<AdminLeaves />} />
                     <Route path="/hierarchy" element={<HierarchyTree />} />
                     <Route path="/leave-report" element={<LeaveReport />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
                     <Route path="/first-time-login" element={<FirstTimeLogin/>} />
-                    <Route path ="/register-user" element={<RegisterUser />} />
-
+                    <Route path="/register-user" element={<RegisterUser />} />
+                    <Route path="/projects" element={<ProjectsPage />} />
                 </Routes>
             </Router>
         </>
