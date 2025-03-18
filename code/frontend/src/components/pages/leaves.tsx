@@ -6,6 +6,7 @@ import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterv
 import { CalendarIcon, CheckCircle2, LoaderCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import Layout from "@/components/layout";
 import { useSidebar } from '@/components/ui/sidebar';
+import { DatePicker } from "@/components/date-picker"; // Add this import
 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -188,8 +189,6 @@ const Leaves: React.FC = () => {
     }
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
-    const [showStartCalendar, setShowStartCalendar] = useState(false);
-    const [showEndCalendar, setShowEndCalendar] = useState(false);
     const [leaveDuration, setLeaveDuration] = useState<number | null>(null);
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -212,22 +211,6 @@ const Leaves: React.FC = () => {
             setLeaveDuration(null);
         }
     }, [form.watch('startDate'), form.watch('endDate')]);
-
-    // Close calendars when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (showStartCalendar || showEndCalendar) {
-                const target = event.target as HTMLElement;
-                if (!target.closest('.calendar-wrapper')) {
-                    setShowStartCalendar(false);
-                    setShowEndCalendar(false);
-                }
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [showStartCalendar, showEndCalendar]);
 
    // Update your onSubmit function with this improved version
 async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -266,8 +249,6 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                 reason: "",
             });
             setLeaveDuration(null);
-            setShowStartCalendar(false);
-            setShowEndCalendar(false);
             setSubmitted(false);
         }, 3000);
 
@@ -341,50 +322,22 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                                                 name="startDate"
                                                 render={({ field }) => (
                                                     <FormItem className="relative">
-                                                        <FormLabel className="text-base text-gray-200">Start Date</FormLabel>
-                                                        <div className="calendar-wrapper">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    setShowStartCalendar(!showStartCalendar);
-                                                                    setShowEndCalendar(false);
-                                                                }}
-                                                                className="h-12 w-full flex items-center justify-between px-4 bg-[#2d3748] border border-gray-700 text-white rounded-md hover:bg-[#3b4758]"
-                                                            >
-                                                                <span>
-                                                                    {field.value ? (
-                                                                        format(field.value, "EEEE, MMMM d, yyyy")
-                                                                    ) : (
-                                                                        "Pick a start date"
-                                                                    )}
-                                                                </span>
-                                                                <CalendarIcon className="h-5 w-5 opacity-50" />
-                                                            </button>
-
-                                                            {showStartCalendar && (
-                                                                <div className="absolute z-50 mt-2 calendar-wrapper">
-                                                                    <TailwindCalendar
-                                                                        selected={field.value || undefined}
-                                                                        onSelect={(date) => {
-                                                                            field.onChange(date);
-                                                                            setShowStartCalendar(false);
-                                                                            // Reset end date if it's before new start date
-                                                                            const endDate = form.getValues("endDate");
-                                                                            if (endDate && date > endDate) {
-                                                                                form.setValue("endDate", null as any);
-                                                                            }
-                                                                        }}
-                                                                        disabledDates={(date) => {
-                                                                            const today = new Date();
-                                                                            today.setHours(0, 0, 0, 0);
-                                                                            return date < today;
-                                                                        }}
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <FormMessage className="text-red-400" />
-                                                    </FormItem>
+                                                    <FormLabel className="text-base text-gray-200">Start Date</FormLabel>
+                                                    <FormControl>
+                                                        <DatePicker 
+                                                            date={field.value} 
+                                                            setDate={(date) => {
+                                                                field.onChange(date);
+                                                                // Reset end date if it's before new start date
+                                                                const endDate = form.getValues("endDate");
+                                                                if (endDate && date > endDate) {
+                                                                    form.setValue("endDate", null as any);
+                                                                }
+                                                            }} 
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage className="text-red-400" />
+                                                </FormItem>
                                                 )}
                                             />
                                             <FormField
@@ -392,47 +345,15 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                                                 name="endDate"
                                                 render={({ field }) => (
                                                     <FormItem className="relative">
-                                                        <FormLabel className="text-base text-gray-200">End Date</FormLabel>
-                                                        <div className="calendar-wrapper">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    setShowEndCalendar(!showEndCalendar);
-                                                                    setShowStartCalendar(false);
-                                                                }}
-                                                                className="h-12 w-full flex items-center justify-between px-4 bg-[#2d3748] border border-gray-700 text-white rounded-md hover:bg-[#3b4758]"
-                                                                disabled={!form.watch('startDate')}
-                                                            >
-                                                                <span>
-                                                                    {field.value ? (
-                                                                        format(field.value, "EEEE, MMMM d, yyyy")
-                                                                    ) : (
-                                                                        "Pick an end date"
-                                                                    )}
-                                                                </span>
-                                                                <CalendarIcon className="h-5 w-5 opacity-50" />
-                                                            </button>
-
-                                                            {showEndCalendar && (
-                                                                <div className="absolute z-50 mt-2 calendar-wrapper">
-                                                                    <TailwindCalendar
-                                                                        selected={field.value || undefined}
-                                                                        onSelect={(date) => {
-                                                                            field.onChange(date);
-                                                                            setShowEndCalendar(false);
-                                                                        }}
-                                                                        disabledDates={(date) => {
-                                                                            const startDate = form.getValues("startDate");
-                                                                            if (!startDate) return true;
-                                                                            return date < startDate;
-                                                                        }}
-                                                                        minDate={form.watch('startDate')}
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <FormMessage className="text-red-400" />
-                                                    </FormItem>
+                                                    <FormLabel className="text-base text-gray-200">End Date</FormLabel>
+                                                    <FormControl>
+                                                        <DatePicker 
+                                                            date={field.value}
+                                                            setDate={(date) => field.onChange(date)}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage className="text-red-400" />
+                                                </FormItem>
                                                 )}
                                             />
                                         </div>
@@ -480,8 +401,6 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                                                 type="button"
                                                 onClick={() => {
                                                     form.reset();
-                                                    setShowStartCalendar(false);
-                                                    setShowEndCalendar(false);
                                                 }}
                                                 className="h-12 px-7 text-base bg-transparent border border-gray-600 text-gray-200 rounded-md hover:bg-gray-700 hover:text-white"
                                             >
