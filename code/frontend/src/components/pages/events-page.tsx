@@ -53,7 +53,7 @@ export default function EventsPage() {
                         justifyContent: "right",
                     }}
                 >
-                    {superUser === "admin" && <CreateEmail />}
+                    {(superUser === "admin" || superUser === "superadmin") && <CreateEmail />}
                 </div>
                 <EmailList />
             </div>
