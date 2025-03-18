@@ -128,6 +128,14 @@ const HomePage: React.FC = () => {
                         >
                             User Requests
                         </Button>
+
+                        <Button
+                            variant="ghost"
+                            className="w-full justify-start"
+                            onClick={() => navigate('/register-user')}
+                        >
+                            Register User
+                        </Button>
                     </nav>
                 </div>
 

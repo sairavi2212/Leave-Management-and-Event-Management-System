@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import Layout from "../layout";
 
 export default function RegisterUser() {
   const navigate = useNavigate();
@@ -88,7 +89,13 @@ export default function RegisterUser() {
   };
 
   return (
-    <div className="flex min-h-screen bg-zinc-900 items-center justify-center p-4">
+    <Layout>
+    <div style={{
+                    paddingLeft: '60vh',
+                    paddingRight: '0vh',
+                    width: '150vh',
+                    height: '30vh',
+                }}>
       <div className="w-full max-w-md">
         <div className="animate-fadeIn">
           <Card className="border-zinc-800 bg-zinc-800/50 backdrop-blur-sm shadow-xl">
@@ -239,5 +246,6 @@ export default function RegisterUser() {
         </div>
       </div>
     </div>
+    </Layout>
   );
 }
