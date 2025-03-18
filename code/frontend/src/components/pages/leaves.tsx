@@ -177,18 +177,18 @@ const formSchema = z.object({
 
 const Leaves: React.FC = () => {
 
-    
-      
-      let isSidebarOpen = false;
-      
-      try {
-          // Try to get the sidebar context safely
-          const context = useSidebar();
-          isSidebarOpen = context.open;
-      } catch (error) {
-          console.log("Sidebar context not available, using default state");
-          // Use default false value
-      }
+
+
+    let isSidebarOpen = false;
+
+    try {
+        // Try to get the sidebar context safely
+        const context = useSidebar();
+        isSidebarOpen = context.open;
+    } catch (error) {
+        console.log("Sidebar context not available, using default state");
+        // Use default false value
+    }
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [showStartCalendar, setShowStartCalendar] = useState(false);
@@ -232,44 +232,55 @@ const Leaves: React.FC = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [showStartCalendar, showEndCalendar]);
 
-    async function onSubmit(values: z.infer<typeof formSchema>) {
-        setIsSubmitting(true);
-        try {
-            const formattedData = {
-                ...values,
-                startDate: format(values.startDate, "yyyy-MM-dd"),
-                endDate: format(values.endDate, "yyyy-MM-dd"),
-                status: "pending",
-                submittedAt: new Date().toISOString(),
-            };
+   // Update your onSubmit function with this improved version
+async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true);
+    try {
+        const formattedData = {
+            ...values,
+            startDate: format(values.startDate, "yyyy-MM-dd"),
+            endDate: format(values.endDate, "yyyy-MM-dd"),
+            status: "pending",
+            submittedAt: new Date().toISOString(),
+        };
 
-            const response = await fetch('http://localhost:5000/api/leaves', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(formattedData),
-            });
+        const response = await fetch('http://localhost:5000/api/leaves', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(formattedData),
+        });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to submit leave request');
-            }
-
-            setSubmitted(true);
-            setTimeout(() => {
-                form.reset();
-                setSubmitted(false);
-            }, 3000);
-
-        } catch (error) {
-            console.error("Error submitting form:", error);
-            alert("Failed to submit leave application. Please try again.");
-        } finally {
-            setIsSubmitting(false);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to submit leave request');
         }
+
+        setSubmitted(true);
+        
+        // Improved form reset logic
+        setTimeout(() => {
+            form.reset({
+                leaveType: undefined,
+                startDate: undefined,
+                endDate: undefined,
+                reason: "",
+            });
+            setLeaveDuration(null);
+            setShowStartCalendar(false);
+            setShowEndCalendar(false);
+            setSubmitted(false);
+        }, 3000);
+
+    } catch (error) {
+        console.error("Error submitting form:", error);
+        alert("Failed to submit leave application. Please try again.");
+    } finally {
+        setIsSubmitting(false);
     }
+}
 
     return (
         <Layout>

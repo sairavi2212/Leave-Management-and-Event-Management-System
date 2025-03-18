@@ -701,5 +701,92 @@ app.post('/api/events/create-event', auth, async (req, res) => {
   }
 });
 
+
+
+app.post('/api/register-user', auth, async (req, res) => {
+  try {
+    const adminUser = await User.findById(req.user.userId);
+    // Allow if the user's role is either 'admin' or 'superadmin'
+    if (!adminUser || (adminUser.role !== 'admin' && adminUser.role !== 'superadmin')) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    
+    const { name, email, role, age, project, parent_role, contact, location, password } = req.body;
+    
+    // Check if a user with the given email already exists
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ message: 'User with that email already exists' });
+    }
+    
+    // Create a new user; if no password is provided, default to an empty string.
+    const newUser = new User({
+      name,
+      email,
+      role,
+      age,
+      project,       // Assuming project is sent as an array
+      parent_role,   // Assuming parent_role is sent as an array
+      contact,
+      location,
+      password: password || ""  // Empty password indicates first-time login.
+    });
+    await newUser.save();
+    res.status(201).json({ message: 'User registered successfully' });
+  } catch (err) {
+    console.error("Error registering user:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+// First Time Login Endpoint
+app.post('/api/first-time-login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    // Find the user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Check if the user already has a password set (non-empty)
+    if (user.password && user.password.trim() !== "") {
+      return res.status(400).json({ message: 'Password is already set for this account' });
+    }
+    
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    
+    // Update the user's password
+    user.password = hashedPassword;
+    await user.save();
+    
+    // Generate JWT token for the user
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+    
+    res.status(200).json({
+      message: 'Password set successfully',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (err) {
+    console.error("Error in first time login:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

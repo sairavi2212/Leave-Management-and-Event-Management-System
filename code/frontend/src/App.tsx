@@ -10,7 +10,8 @@ import AdminLeaves from "./components/pages/admin";
 import HierarchyTree from "./components/pages/hierarchy";
 import LeaveReport from "./components/pages/leave_report";
 import ResetPasswordPage from "./components/pages/passwordreset";
-import TestPage from "./components/pages/test";
+import RegisterUser from "./components/pages/RegisterUser";
+import FirstTimeLogin from "./components/pages/FirstTimeLogin";
 
 function App() {
     return (
@@ -28,7 +29,9 @@ function App() {
                     <Route path="/hierarchy" element={<HierarchyTree />} />
                     <Route path="/leave-report" element={<LeaveReport />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
-                    <Route path="/test" element={<TestPage />} />
+                    <Route path="/first-time-login" element={<FirstTimeLogin/>} />
+                    <Route path ="/register-user" element={<RegisterUser />} />
+
                 </Routes>
             </Router>
         </>
