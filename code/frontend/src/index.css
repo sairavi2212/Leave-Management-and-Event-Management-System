@@ -12,6 +12,104 @@
   animation: fadeIn 0.3s ease-out forwards;
 }
 
+/* Custom Calendar Styling */
+.rdp {
+  --rdp-cell-size: 40px;
+  --rdp-accent-color: #3b82f6;
+  --rdp-background-color: #334155;
+  margin: 0;
+}
+
+.rdp-months {
+  justify-content: center;
+}
+
+.rdp-month {
+  background-color: #1e293b;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.rdp-caption {
+  justify-content: center;
+  padding: 0 0 16px;
+  border-bottom: 1px solid #334155;
+  margin-bottom: 8px;
+}
+
+.rdp-caption_label {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #f8fafc;
+}
+
+.rdp-nav_button {
+  width: 34px;
+  height: 34px;
+  color: #f8fafc;
+  border-radius: 6px;
+}
+
+.rdp-nav_button:hover {
+  background-color: #334155;
+}
+
+.rdp-head_cell {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  padding: 8px 0;
+}
+
+.rdp-cell {
+  padding: 0;
+}
+
+.rdp-day {
+  width: var(--rdp-cell-size);
+  height: var(--rdp-cell-size);
+  font-size: 0.875rem;
+  color: #f1f5f9;
+  border-radius: 9999px;
+}
+
+.rdp-day:hover:not(.rdp-day_disabled) {
+  background-color: #334155;
+}
+
+.rdp-day_today {
+  position: relative;
+}
+
+.rdp-day_today:after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  background-color: #3b82f6;
+}
+
+.rdp-day_selected:not(.rdp-day_outside) {
+  background-color: #3b82f6;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.rdp-day_outside {
+  opacity: 0.4;
+}
+
+.rdp-day_disabled {
+  color: #475569;
+  opacity: 0.5;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -83,6 +181,50 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(0.279 0.041 260.031);
   --sidebar-ring: oklch(0.446 0.043 257.281);
+}
+
+/* Add this to your global CSS file */
+.custom-calendar {
+  --rdp-accent-color: #3b82f6;
+  --rdp-background-color: #2d3748;
+  --rdp-accent-color-dark: #2563eb;
+  --rdp-background-color-dark: #1e293b;
+  --rdp-outline: 2px solid var(--rdp-accent-color);
+  --rdp-outline-selected: 2px solid #4f46e5;
+  color: white;
+}
+
+.custom-calendar button:hover:not([disabled]),
+.custom-calendar button:focus-visible:not([disabled]) {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: white;
+}
+
+.custom-calendar button[disabled] {
+  opacity: 0.5;
+}
+
+.custom-calendar .rdp-day_selected,
+.custom-calendar .rdp-day_selected:hover {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.calendar-wrapper {
+  width: 100%;
+  min-width: 280px;
+}
+/* Add to your global CSS file */
+.rdp-nav_button {
+  position: relative;
+}
+
+.rdp-nav_button_previous::before {
+  content: "←";
+}
+
+.rdp-nav_button_next::before {
+  content: "→";
 }
 
 @theme inline {

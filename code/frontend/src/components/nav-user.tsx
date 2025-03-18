@@ -1,3 +1,4 @@
+import React from 'react';
 import {
     SidebarMenu,
     SidebarMenuItem,
@@ -22,7 +23,7 @@ import { useEffect } from "react";
 export default function NavUser() {
     const { isMobile } = useSidebar();
     const navigate = useNavigate();
-    const [userData,setUserData] = useState({name:"",email:""});
+    const [userData, setUserData] = useState({name:"", email:""});
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -53,7 +54,7 @@ export default function NavUser() {
         <SidebarMenu>
             <SidebarMenuItem>
                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                    <DropdownMenuTrigger>
                         <SidebarMenuButton
                             size="lg"
                             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
@@ -112,7 +113,7 @@ export default function NavUser() {
                             <LogOut className="mr-2" />
                             Log out
                         </DropdownMenuItem>
-                    </DropdownMenuContent   >
+                    </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarMenuItem>
         </SidebarMenu>

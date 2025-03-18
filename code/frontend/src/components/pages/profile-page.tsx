@@ -17,7 +17,8 @@ const Profile: React.FC = () => {
         lastName: '',
         email: '',
         age: 0,
-        contact: ''
+        contact: '',
+        location: ''
     });
 
     // Fetch user data on component mount
@@ -26,26 +27,27 @@ const Profile: React.FC = () => {
             try {
                 setLoading(true);
                 const token = localStorage.getItem('token');
-                
+
                 if (!token) {
                     throw new Error('Authentication token not found');
                 }
-                
+
                 const response = await axios.get('http://localhost:5000/api/user/profile', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
-                
+
                 // Adapt field names if your API returns different field names
                 setEditFormData({
                     firstName: response.data.firstName || response.data.name?.split(' ')[0] || '',
                     lastName: response.data.lastName || response.data.name?.split(' ')[1] || '',
                     email: response.data.email || '',
                     age: response.data.age || 0,
-                    contact: response.data.contact || response.data.phone || ''
+                    contact: response.data.contact || response.data.phone || '',
+                    location: response.data.location || ''
                 });
-                
+
                 setLoading(false);
             } catch (err) {
                 console.error('Error fetching user profile:', err);
@@ -53,7 +55,7 @@ const Profile: React.FC = () => {
                 setLoading(false);
             }
         };
-        
+
         fetchUserProfile();
     }, []);
 
@@ -71,20 +73,31 @@ const Profile: React.FC = () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
-            
+
             if (!token) {
                 throw new Error('Authentication token not found');
             }
-            
-            await axios.put('http://localhost:5000/api/user/profile', editFormData, {
+
+            const formattedData = {
+                // Combine firstName and lastName into the required "name" field
+                name: `${editFormData.firstName} ${editFormData.lastName}`.trim(),
+                // Add the required "location" field (with a default if not in your form)
+                location: editFormData.location || "Not specified",
+                // Include the rest of your form data
+                email: editFormData.email,
+                age: editFormData.age,
+                contact: editFormData.contact
+            };
+
+            await axios.put('http://localhost:5000/api/user/profile', formattedData, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            
+
             setSuccessMessage('Profile updated successfully');
             setIsEditing(false);
-            
+
             setTimeout(() => {
                 setSuccessMessage('');
             }, 3000);
@@ -121,21 +134,21 @@ const Profile: React.FC = () => {
                         <CardTitle className="text-2xl text-center">My Profile</CardTitle>
                     </div>
                 </CardHeader>
-                
+
                 <CardContent className="pt-2">
                     {error && (
                         <div className="mb-6 p-3 rounded bg-red-900/20 border border-red-800 text-red-300">
                             {error}
                         </div>
                     )}
-                    
+
                     {successMessage && (
                         <div className="mb-6 p-3 rounded bg-green-900/20 border border-green-800 text-green-300 flex items-center">
                             <CheckCircle className="h-5 w-5 mr-2" />
                             {successMessage}
                         </div>
                     )}
-                    
+
                     {isEditing ? (
                         <div className="space-y-4">
                             <div className="space-y-2">
@@ -148,7 +161,7 @@ const Profile: React.FC = () => {
                                     className="bg-zinc-700 border-zinc-600 text-white focus-visible:ring-blue-500"
                                 />
                             </div>
-                            
+
                             <div className="space-y-2">
                                 <Label htmlFor="lastName" className="text-zinc-300">Last Name:</Label>
                                 <Input
@@ -159,7 +172,7 @@ const Profile: React.FC = () => {
                                     className="bg-zinc-700 border-zinc-600 text-white focus-visible:ring-blue-500"
                                 />
                             </div>
-                            
+
                             <div className="space-y-2">
                                 <Label htmlFor="email" className="text-zinc-300">Email:</Label>
                                 <Input
@@ -171,7 +184,7 @@ const Profile: React.FC = () => {
                                     className="bg-zinc-800 border-zinc-700 text-zinc-400"
                                 />
                             </div>
-                            
+
                             <div className="space-y-2">
                                 <Label htmlFor="age" className="text-zinc-300">Age:</Label>
                                 <Input
@@ -183,7 +196,7 @@ const Profile: React.FC = () => {
                                     className="bg-zinc-700 border-zinc-600 text-white focus-visible:ring-blue-500"
                                 />
                             </div>
-                            
+
                             <div className="space-y-2">
                                 <Label htmlFor="contact" className="text-zinc-300">Contact:</Label>
                                 <Input
@@ -194,9 +207,20 @@ const Profile: React.FC = () => {
                                     className="bg-zinc-700 border-zinc-600 text-white focus-visible:ring-blue-500"
                                 />
                             </div>
-                            
+                            {/* Add this in the isEditing section */}
+                            <div className="space-y-2">
+                                <Label htmlFor="location" className="text-zinc-300">Location:</Label>
+                                <Input
+                                    id="location"
+                                    name="location"
+                                    value={editFormData.location}
+                                    onChange={handleInputChange}
+                                    className="bg-zinc-700 border-zinc-600 text-white focus-visible:ring-blue-500"
+                                    placeholder="e.g., New York, NY"
+                                />
+                            </div>
                             <div className="flex justify-between pt-4">
-                                <Button 
+                                <Button
                                     variant="default"
                                     onClick={handleSave}
                                     className="bg-blue-600 hover:bg-blue-700"
@@ -209,10 +233,10 @@ const Profile: React.FC = () => {
                                         </div>
                                     ) : 'Save'}
                                 </Button>
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     onClick={() => setIsEditing(false)}
-                                    className="border-zinc-600 text-zinc-300 hover:bg-zinc-700 hover:text-white"
+                                    className="border-zinc-600 text-zinc-100 hover:bg-zinc-800 hover:text-white"
                                     disabled={loading}
                                 >
                                     Cancel
@@ -242,11 +266,16 @@ const Profile: React.FC = () => {
                                     <p className="font-medium text-zinc-400">Contact:</p>
                                     <p className="font-bold">{editFormData.contact}</p>
                                 </div>
+                                {/* Add this in the non-editing display section */}
+                                <div className="flex justify-between border-b border-zinc-700 pb-2">
+                                    <p className="font-medium text-zinc-400">Location:</p>
+                                    <p className="font-bold">{editFormData.location || "Not specified"}</p>
+                                </div>
                             </div>
-                            
+
                             <div className="flex justify-center pt-2">
-                                <Button 
-                                    onClick={handleEditToggle} 
+                                <Button
+                                    onClick={handleEditToggle}
                                     className="bg-blue-600 hover:bg-blue-700"
                                 >
                                     <Edit className="h-4 w-4 mr-2" /> Edit Profile

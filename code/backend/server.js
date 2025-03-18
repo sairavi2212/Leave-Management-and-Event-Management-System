@@ -30,16 +30,16 @@ mongoose.connect(MONGODB_URI)
     process.exit(1); // Exit process with failure
   });
 
-app.get("api/user/profile", auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId).select("-password");
-    res.json(user);
-  } catch (error) {
-    console.error("Error fetching user profile:", error);
-    res.status(500).json({ message: "Server Error" });
-  }
-}
-);
+// app.get("api/user/profile", auth, async (req, res) => {
+//   try {
+//     const user = await User.findById(req.user.userId).select("-password");
+//     res.json(user);
+//   } catch (error) {
+//     console.error("Error fetching user profile:", error);
+//     res.status(500).json({ message: "Server Error" });
+//   }
+// }
+// );
 
 app.put("/api/user/profile", auth, async (req, res) => {
   try {
