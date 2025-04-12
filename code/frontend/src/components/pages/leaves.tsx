@@ -212,35 +212,6 @@ const Leaves: React.FC = () => {
         }
     }, [form.watch('startDate'), form.watch('endDate')]);
 
-<<<<<<< HEAD
-    // Close calendars when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (showStartCalendar || showEndCalendar) {
-                const target = event.target as HTMLElement;
-                if (!target.closest('.calendar-wrapper')) {
-                    setShowStartCalendar(false);
-                    setShowEndCalendar(false);
-                }
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [showStartCalendar, showEndCalendar]);
-
-    // Update your onSubmit function with this improved version
-    async function onSubmit(values: z.infer<typeof formSchema>) {
-        setIsSubmitting(true);
-        try {
-            const formattedData = {
-                ...values,
-                startDate: format(values.startDate, "yyyy-MM-dd"),
-                endDate: format(values.endDate, "yyyy-MM-dd"),
-                status: "pending",
-                submittedAt: new Date().toISOString(),
-            };
-=======
    // Update your onSubmit function with this improved version
 async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
@@ -252,51 +223,42 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
             status: "pending",
             submittedAt: new Date().toISOString(),
         };
->>>>>>> d6654ca64e65aaf542fb62d4a093ccd35751b8b4
 
-            const response = await fetch('http://localhost:5000/api/leaves', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(formattedData),
+        const response = await fetch('http://localhost:5000/api/leaves', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(formattedData),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to submit leave request');
+        }
+
+        setSubmitted(true);
+        
+        // Improved form reset logic
+        setTimeout(() => {
+            form.reset({
+                leaveType: undefined,
+                startDate: undefined,
+                endDate: undefined,
+                reason: "",
             });
-<<<<<<< HEAD
-=======
             setLeaveDuration(null);
             setSubmitted(false);
         }, 3000);
->>>>>>> d6654ca64e65aaf542fb62d4a093ccd35751b8b4
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to submit leave request');
-            }
-
-            setSubmitted(true);
-
-            // Improved form reset logic
-            setTimeout(() => {
-                form.reset({
-                    leaveType: undefined,
-                    startDate: undefined,
-                    endDate: undefined,
-                    reason: "",
-                });
-                setLeaveDuration(null);
-                setShowStartCalendar(false);
-                setShowEndCalendar(false);
-                setSubmitted(false);
-            }, 3000);
-
-        } catch (error) {
-            console.error("Error submitting form:", error);
-            alert("Failed to submit leave application. Please try again.");
-        } finally {
-            setIsSubmitting(false);
-        }
+    } catch (error) {
+        console.error("Error submitting form:", error);
+        alert("Failed to submit leave application. Please try again.");
+    } finally {
+        setIsSubmitting(false);
     }
+}
 
     return (
         <Layout>

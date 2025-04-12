@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ModeToggle } from "@/components/mode-toggle";
+import { Home } from "lucide-react";
 
 interface Event {
     _id: string;
@@ -20,12 +21,41 @@ interface Project {
     endDate: string;
 }
 
+interface MenuItem {
+    title: string;
+    url: string;
+    icon: typeof Home;
+}
+
 const HomePage: React.FC = () => {
     const navigate = useNavigate();
     const [username, setUsername] = React.useState<string>('');
     const [isLoading, setIsLoading] = React.useState<boolean>(true);
     const [recentEvents, setRecentEvents] = React.useState<Event[]>([]);
     const [recentProjects, setRecentProjects] = React.useState<Project[]>([]);
+    const [userRole, setUserRole] = useState<string>('');
+    const [menuItems, setMenuItems] = useState<MenuItem[]>([
+        {
+            title: "Home",
+            url: "/home",
+            icon: Home,
+        },
+        {
+            title: "Events",
+            url: "/events",
+            icon: Home,
+        },
+        {
+            title: "Projects",
+            url: "/projects",
+            icon: Home,
+        },
+        {
+            title: "Leave Report",
+            url: "/leave-report",
+            icon: Home,
+        }
+    ]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -56,8 +86,9 @@ const HomePage: React.FC = () => {
                         eventsResponse.json(),
                         projectsResponse.json()
                     ]);
-                    const naam = userData.firstName ;
+                    const naam = userData.firstName;
                     setUsername(naam || 'User');
+                    setUserRole(userData.role || '');
                     setRecentEvents(eventsData);
                     setRecentProjects(projectsData);
                 }
@@ -70,6 +101,50 @@ const HomePage: React.FC = () => {
 
         fetchData();
     }, [navigate]);
+
+    // Update menu items based on user role
+    useEffect(() => {
+        const items = [...menuItems];
+
+        if (userRole === 'admin' || userRole === 'superadmin') {
+            if (!items.some(e => e.title === "User Requests")) {
+                items.push({
+                    title: "User Requests",
+                    url: "/admin",
+                    icon: Home,
+                });
+            }
+        }
+
+        if (userRole === 'superadmin') {
+            if (!items.some(e => e.title === "Register User")) {
+                items.push({
+                    title: "Register User",
+                    url: "/register-user",
+                    icon: Home,
+                });
+            }
+        }
+
+        if (userRole === 'admin' || userRole === 'user') {
+            if (!items.some(e => e.title === "Leave Request")) {
+                items.push({
+                    title: "Leave Request",
+                    url: "/leaves",
+                    icon: Home,
+                });
+            }
+            if (!items.some(e => e.title === "My Leaves")) {
+                items.push({
+                    title: "My Leaves",
+                    url: "/myleaves",
+                    icon: Home,
+                });
+            }
+        }
+
+        setMenuItems(items);
+    }, [userRole]);
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString();
@@ -85,57 +160,17 @@ const HomePage: React.FC = () => {
                         <ModeToggle />
                     </div>
                     <nav className="space-y-4">
-                        <Button 
-                            variant="ghost" 
-                            className="w-full justify-start" 
-                            onClick={() => navigate('/events')}
-                        >
-                            Events
-                        </Button>
-                        <Button 
-                            variant="ghost" 
-                            className="w-full justify-start"
-                            onClick={() => navigate('/projects')}
-                        >
-                            Projects
-                        </Button>
-                        <Button 
-                            variant="ghost" 
-                            className="w-full justify-start"
-                            onClick={() => navigate('/leaves')}
-                        >
-                            Leave Request
-                        </Button>
-                        <Button 
-                            variant="ghost" 
-                            className="w-full justify-start"
-                            onClick={() => navigate('/myleaves')}
-                        >
-                            My Leaves
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            className="w-full justify-start"
-                            onClick={() => navigate('/leave-report')}
-                        >
-                            Leave Report
-                        </Button>
-                        
-                        <Button
-                            variant="ghost"
-                            className="w-full justify-start"
-                            onClick={() => navigate('/admin')}
-                        >
-                            User Requests
-                        </Button>
-
-                        <Button
-                            variant="ghost"
-                            className="w-full justify-start"
-                            onClick={() => navigate('/register-user')}
-                        >
-                            Register User
-                        </Button>
+                        {menuItems.map((item) => (
+                            <Button 
+                                key={item.title}
+                                variant="ghost" 
+                                className="w-full justify-start" 
+                                onClick={() => navigate(item.url)}
+                            >
+                                <item.icon className="mr-2 h-4 w-4" />
+                                {item.title}
+                            </Button>
+                        ))}
                     </nav>
                 </div>
 
@@ -165,7 +200,7 @@ const HomePage: React.FC = () => {
                                 )}
                             </div>
                             <div className="p-6 border rounded-lg shadow-sm">
-                            <h2 className="text-2xl font-semibold mb-4">Recent Projects</h2>
+                                <h2 className="text-2xl font-semibold mb-4">Recent Projects</h2>
                                 {isLoading ? (
                                     <p className="text-muted-foreground">Loading...</p>
                                 ) : recentProjects.length > 0 ? (

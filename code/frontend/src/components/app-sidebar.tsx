@@ -40,16 +40,6 @@ const items = [
     icon: Home,
   },
   {
-    title: "Leave Request",
-    url: "leaves",
-    icon: Home,
-  },
-  {
-    title: "My Leaves",
-    url: "myleaves",
-    icon: Home,
-  },
-  {
     title: "Leave Report",
     url: "leave-report",
     icon: Home,
@@ -80,6 +70,7 @@ export function AppSidebar() {
     fetchUserData();
   }, []);
 
+
   if((userData.role === "admin" || userData.role === "superadmin") ) {
     if(!items.some(e => e.title === "User Requests")){
       items.push({
@@ -95,6 +86,24 @@ export function AppSidebar() {
       items.push({
         title: "Register User",
         url: "register-user",
+        icon: Home,
+      })
+    }
+  }
+
+  if(userData.role === "admin" || userData.role === "user") {
+    // add myleaves and leave request
+    if(!items.some(e => e.title === "Leave Request")){
+      items.push({
+        title: "Leave Request",
+        url: "leaves",
+        icon: Home,
+      })
+    }
+    if(!items.some(e => e.title === "My Leaves")){
+      items.push({
+        title: "My Leaves",
+        url: "myleaves",
         icon: Home,
       })
     }

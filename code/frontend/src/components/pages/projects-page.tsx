@@ -1,6 +1,6 @@
 import Layout from "@/components/layout.tsx";
-import ProjectList from "@/components/ui/project-list";
-import CreateProject from "@/components/ui/create-project";
+import ProjectList from "@/components/project-list";
+import CreateProject from "@/components/create-project-dialog";
 import { useState, useEffect } from "react";
 import axios from "axios";
 
