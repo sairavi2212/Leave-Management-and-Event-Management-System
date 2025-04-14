@@ -368,7 +368,7 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                                                                 field.onChange(date);
                                                                 // Reset end date if it's before new start date
                                                                 const endDate = form.getValues("endDate");
-                                                                if (endDate && date > endDate) {
+                                                                if (endDate && date && date > endDate) {
                                                                     // Use a new Date instance that's far in the future, then clear it via form.reset later
                                                                     form.setValue("endDate", new Date());
                                                                     // Then use setTimeout to clear both dates properly
@@ -393,7 +393,7 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                                                         <DatePicker 
                                                             date={field.value}
                                                             setDate={(date) => field.onChange(date)}
-                                                            minDate={form.getValues("startDate")}
+                                                            disabledDates={(date) => form.getValues("startDate") && date < form.getValues("startDate")}
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-red-400" />

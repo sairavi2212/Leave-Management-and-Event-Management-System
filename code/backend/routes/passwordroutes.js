@@ -8,7 +8,7 @@ import transporter from '../utils/email.js'; // Import the transporter
 import auth from '../middleware/auth.js';
   
   // Request password reset (send email)
-  passwordrouter.post('/request', auth,async (req, res) => {
+  passwordrouter.post('/request', async (req, res) => {
     try {
       const { email } = req.body;
       console.log(email, "email");
@@ -81,7 +81,7 @@ import auth from '../middleware/auth.js';
   });
   
   // Verify reset token
-  passwordrouter.get('/verify/:token', auth,async (req, res) => {
+  passwordrouter.get('/verify/:token', async (req, res) => {
     try {
       const { token } = req.params;
       
@@ -110,7 +110,7 @@ import auth from '../middleware/auth.js';
   });
   
   // Reset password with token
-  passwordrouter.post('/reset/:token',auth, async (req, res) => {
+  passwordrouter.post('/reset/:token',async (req, res) => {
     try {
       const { token } = req.params;
       const { password } = req.body;

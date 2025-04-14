@@ -9,16 +9,6 @@ import passwordrouter from './routes/passwordroutes.js';
 import leaverouter from './routes/leaveroutes.js';
 import connectDB from './utils/db.js';
 
-const CASUAL_LEAVE_MONTH = 12;
-const EARNED_LEAVE_MONTH = 12;
-const SICK_LEAVE_MONTH = 12;
-
-// Function to calculate difference in months between two dates
-function differenceInMonths(dateA, dateB) {
-  const yearDiff = dateA.getFullYear() - dateB.getFullYear();
-  const monthDiff = dateA.getMonth() - dateB.getMonth();
-  return yearDiff * 12 + monthDiff;
-}
 
 dotenv.config();
 const app = express();

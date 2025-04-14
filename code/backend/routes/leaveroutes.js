@@ -6,14 +6,16 @@ import express from 'express';
 const leaverouter = express.Router();
 import transporter from '../utils/email.js'; // Import the transporter
 
-// const transporter = nodemailer.createTransport({
-//   service: 'gmail',
-//   auth: {
-//     user: 'foundationeklavya1@gmail.com',
-//     pass: 'ewmy guwx keia ptqg  ',
-//   }
-// });
 
+const CASUAL_LEAVE_MONTH = 12;
+const EARNED_LEAVE_MONTH = 12;
+const SICK_LEAVE_MONTH = 12;
+
+function differenceInMonths(dateA, dateB) {
+  const yearDiff = dateA.getFullYear() - dateB.getFullYear();
+  const monthDiff = dateA.getMonth() - dateB.getMonth();
+  return yearDiff * 12 + monthDiff;
+}
 
 
 leaverouter.post('/', auth, async (req, res) => {
@@ -301,6 +303,225 @@ leaverouter.post('/', auth, async (req, res) => {
     } catch (error) {
         console.error('Error generating leave report:', error);
         res.status(500).json({ message: 'Error generating leave report' });
+    }
+  });
+
+  leaverouter.get('/balance', auth, async (req, res) => {
+    try {
+      // Get user info for registration date
+      const user = await User.findById(req.user.userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      // Calculate months since registration
+      const registrationDate = user.createdAt;
+      const currentDate = new Date();
+      const monthsSinceRegistration = differenceInMonths(currentDate, registrationDate) + 1; // Add 1 to include current month
+  
+      // Get all approved leave requests for this user
+      const approvedLeaves = await Leave.find({ 
+        userId: req.user.userId,
+        status: 'approved'
+      });
+  
+      // Calculate used leaves by type
+      const usedLeaves = {
+        sick: 0,
+        casual: 0,
+        earned: 0
+      };
+  
+      approvedLeaves.forEach(leave => {
+        if (leave.leaveType in usedLeaves) {
+          // Calculate duration including both start and end date
+          const durationInDays = Math.ceil((leave.endDate - leave.startDate) / (1000 * 60 * 60 * 24)) + 1;
+          usedLeaves[leave.leaveType] += durationInDays;
+        }
+      });
+  
+      // Calculate allocated leaves based on months since registration
+      const allocatedLeaves = {
+        sick: monthsSinceRegistration * SICK_LEAVE_MONTH,     // 1 sick leave per month
+        casual: monthsSinceRegistration * CASUAL_LEAVE_MONTH,    // 1 casual leave per month
+        earned: monthsSinceRegistration * EARNED_LEAVE_MONTH     // 1 earned leave per month
+      };
+  
+      // Calculate remaining leaves
+      const remainingLeaves = {
+        sick: Math.max(0, allocatedLeaves.sick - usedLeaves.sick),
+        casual: Math.max(0, allocatedLeaves.casual - usedLeaves.casual),
+        earned: Math.max(0, allocatedLeaves.earned - usedLeaves.earned)
+      };
+  
+      console.log(allocatedLeaves, usedLeaves, remainingLeaves);
+      
+      res.json({
+        allocated: allocatedLeaves,
+        used: usedLeaves,
+        remaining: remainingLeaves,
+        monthsSinceRegistration
+      });
+    } catch (error) {
+      console.error('Error fetching leave balance:', error);
+      res.status(500).json({ message: 'Failed to fetch leave balance', error: error.message });
+    }
+  });
+  
+  // Get detailed leave report data for subordinates for a specific month/year
+  leaverouter.get('/detailed-report', auth, async (req, res) => {
+    try {
+      const { authorization } = req.headers;
+      if (!authorization) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+      
+      const token = authorization.replace('Bearer ', '');
+      const payload = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(payload.userId);
+      
+      if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
+        return res.status(403).json({ message: 'Not authorized' });
+      }
+      
+      const { month, year } = req.query;
+      const monthNum = parseInt(month);
+      const yearNum = parseInt(year);
+      
+      const startDate = new Date(yearNum, monthNum - 1, 1);
+      const endDate = new Date(yearNum, monthNum, 0); // Last day of the month
+      
+      let leavesQuery = Leave.find({
+        startDate: { $lte: endDate },
+        endDate: { $gte: startDate }
+      }).populate('userId', 'name email location');
+      
+      // If admin, only show leaves for their location
+      if (user.role === 'admin') {
+        const userLocation = user.location;
+        const usersInLocation = await User.find({ location: userLocation });
+        const userIds = usersInLocation.map(u => u._id);
+        
+        leavesQuery = leavesQuery.where('userId').in(userIds);
+      }
+      
+      const leaves = await leavesQuery.sort({ submittedAt: -1 });
+      
+      // Format response to include user details and duration
+      const formattedLeaves = leaves.map(leave => {
+        // Calculate duration including both start and end date
+        const duration = Math.ceil((new Date(leave.endDate) - new Date(leave.startDate)) / (1000 * 60 * 60 * 24)) + 1;
+        
+        return {
+          userId: leave.userId._id,
+          userName: leave.userId.name,
+          leaveType: leave.leaveType,
+          startDate: leave.startDate,
+          endDate: leave.endDate,
+          duration: duration,
+          reason: leave.reason,
+          status: leave.status,
+          submittedAt: leave.submittedAt,
+          comments: leave.comments,
+          approvedAt: leave.approvedAt
+        };
+      });
+      
+      res.json(formattedLeaves);
+    } catch (error) {
+      console.error('Error generating detailed leave report:', error);
+      res.status(500).json({ message: 'Error generating detailed leave report', error: error.message });
+    }
+  });
+  
+  // Get historical leave balance data for all subordinates
+  leaverouter.get('/historical-report', auth, async (req, res) => {
+    try {
+      const { authorization } = req.headers;
+      if (!authorization) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+      
+      const token = authorization.replace('Bearer ', '');
+      const payload = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(payload.userId);
+      
+      if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
+        return res.status(403).json({ message: 'Not authorized' });
+      }
+      
+      // Constants for leave allocation per month
+      const SICK_LEAVE_MONTH = 12;
+      const CASUAL_LEAVE_MONTH = 12;
+      const EARNED_LEAVE_MONTH = 12;
+      
+      // Get all users under the manager's supervision
+      let usersQuery;
+      if (user.role === 'admin') {
+        // Admin sees users in their location
+        usersQuery = User.find({ location: user.location });
+      } else {
+        // Superadmin sees all users
+        usersQuery = User.find({});
+      }
+      
+      const users = await usersQuery.select('_id name email createdAt');
+      
+      // For each user, calculate leave balances
+      const historicalData = await Promise.all(users.map(async (subordinate) => {
+        // Calculate months since registration
+        const registrationDate = subordinate.createdAt;
+        const currentDate = new Date();
+        const monthsSinceRegistration = differenceInMonths(currentDate, registrationDate) + 1;
+        
+        // Get all approved leave requests for this user
+        const approvedLeaves = await Leave.find({ 
+          userId: subordinate._id,
+          status: 'approved'
+        });
+        
+        // Calculate used leaves by type
+        const usedLeaves = {
+          sick: 0,
+          casual: 0,
+          earned: 0
+        };
+        
+        approvedLeaves.forEach(leave => {
+          if (leave.leaveType in usedLeaves) {
+            // Calculate duration including both start and end date
+            const durationInDays = Math.ceil((new Date(leave.endDate) - new Date(leave.startDate)) / (1000 * 60 * 60 * 24)) + 1;
+            usedLeaves[leave.leaveType] += durationInDays;
+          }
+        });
+        
+        // Calculate allocated leaves based on months since registration
+        const allocatedLeaves = {
+          sick: monthsSinceRegistration * SICK_LEAVE_MONTH,
+          casual: monthsSinceRegistration * CASUAL_LEAVE_MONTH,
+          earned: monthsSinceRegistration * EARNED_LEAVE_MONTH
+        };
+        
+        // Calculate remaining leaves
+        const remainingLeaves = {
+          sick: Math.max(0, allocatedLeaves.sick - usedLeaves.sick),
+          casual: Math.max(0, allocatedLeaves.casual - usedLeaves.casual),
+          earned: Math.max(0, allocatedLeaves.earned - usedLeaves.earned)
+        };
+        
+        return {
+          userName: subordinate.name,
+          allocated: allocatedLeaves,
+          used: usedLeaves,
+          remaining: remainingLeaves,
+          registrationDate: subordinate.createdAt
+        };
+      }));
+      
+      res.json(historicalData);
+    } catch (error) {
+      console.error('Error generating historical leave report:', error);
+      res.status(500).json({ message: 'Error generating historical leave report', error: error.message });
     }
   });
 
