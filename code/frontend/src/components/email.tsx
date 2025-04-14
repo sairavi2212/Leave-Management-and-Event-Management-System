@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
     Card,
     CardDescription,
@@ -28,6 +29,13 @@ export default function Email({
     Description: string;
     Image: string;
 }) {
+    const [imageError, setImageError] = useState(false);
+    
+    const handleImageError = () => {
+        console.error("Failed to load image:", Image);
+        setImageError(true);
+    };
+
     const truncatedDescription =
         Description.length > 20
             ? `${Description.substring(0, 20)}...`
@@ -73,15 +81,20 @@ export default function Email({
                                         </DialogHeader>
                                         <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "1.5rem", overflow: "auto" }}>
                                             <div>{Description}</div>
-                                            {Image && (
+                                            {Image && !imageError ? (
                                                 <div style={{ maxWidth: "100%", textAlign: "center" }}>
                                                     <img 
                                                         src={Image} 
-                                                        alt="Email attachment" 
+                                                        alt="Event attachment" 
                                                         style={{ maxWidth: "100%", maxHeight: "60vh", objectFit: "contain" }} 
+                                                        onError={handleImageError}
                                                     />
                                                 </div>
-                                            )}
+                                            ) : Image ? (
+                                                <div className="text-center text-gray-500 p-4 border border-dashed border-gray-300 rounded-md">
+                                                    Unable to load image
+                                                </div>
+                                            ) : null}
                                         </div>
                                     </div>
                                 </DialogContent>

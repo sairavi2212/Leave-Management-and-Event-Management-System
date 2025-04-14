@@ -3,7 +3,36 @@ import User from '../models/users.js';
 import auth from '../middleware/auth.js';
 import Event from '../models/events.js';
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import multer from 'multer';
 const eventsrouter = express.Router();
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// Set uploads directory to the correct path (backend/uploads instead of routes/uploads)
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+
+// Create uploads directory if it doesn't exist
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Note: The line below should be in server.js, not in the router file
+// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.fieldname + '-' + Date.now() + '-' + file.originalname);
+  }
+})
+
+const upload = multer({ storage: storage });
 
 
 eventsrouter.get('/',auth, async (req, res) => {
@@ -59,9 +88,15 @@ eventsrouter.get('/',auth, async (req, res) => {
     }
   });
 
-  eventsrouter.post('/create-event', auth, async (req, res) => {
+  
+  eventsrouter.post('/create-event', auth, upload.single('eventImage'), async (req, res) => {
     try {
-      var { title, description, start, end, image_blob, locations, projects, selected_dropdown } = req.body;
+      // Get data from request body (now form-data format)
+      const { title, description, start, end, selected_dropdown } = req.body;
+      
+      // Parse JSON strings for arrays
+      const locations = req.body.locations ? JSON.parse(req.body.locations) : [];
+      const projects = req.body.projects ? JSON.parse(req.body.projects) : [];
       
       // Basic validation
       if (!title || !description || !start || !end) {
@@ -74,7 +109,13 @@ eventsrouter.get('/',auth, async (req, res) => {
         return res.status(404).json({ message: 'User not found' });
       }
   
-      // Create new event with empty comments array
+      // Get image path if file was uploaded
+      let image_path = null;
+      if (req.file) {
+        image_path = `/uploads/${req.file.filename}`;
+      }
+  
+      // Create new event
       const newEvent = new Event({
         title,
         description,
@@ -82,18 +123,17 @@ eventsrouter.get('/',auth, async (req, res) => {
         end: new Date(end),
         comments: [], // Initialize with empty comments array
         selected_dropdown: selected_dropdown || 'General', // Default if not provided
-        image_blob: image_blob || 'No Image', // Default if not provided
-        locations: locations || [user.location], // Default to user's location if not specified
+        image_path: image_path, // Store path instead of blob
+        locations: locations.length > 0 ? locations : [user.location], // Default to user's location if not specified
         projects: projects || [],
         // createdAt will use the default value (current time)
       });
       
-      console.log('New event:', newEvent, `saving...`);
+      console.log('New event:', newEvent, 'saving...');
       
-  
       // Save the event to the database
       await newEvent.save();
-      console.log(`saved.`)
+      console.log('Event saved successfully');
       
       res.status(201).json({ 
         message: 'Event created successfully', 
@@ -104,7 +144,6 @@ eventsrouter.get('/',auth, async (req, res) => {
       res.status(500).json({ message: 'Server Error', error: error.message });
     }
   });
-
 //export by default the router
 export default eventsrouter;
 

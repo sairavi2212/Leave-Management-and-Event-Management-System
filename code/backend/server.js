@@ -1,17 +1,7 @@
 import express from 'express';
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import User from './models/users.js';
-import auth from './middleware/auth.js';
-import Event from './models/events.js';
-import Leave from './models/leaves.js';  // Import the Leave model
-import RoleHierarchy from './models/RoleHierarchy.js';  // Import the RoleHierarchy model
-import Project from './models/projects.js';
-import crypto from 'crypto';
-import nodemailer from 'nodemailer';
+import multer from 'multer';
 import eventsrouter from './routes/eventroutes.js';
 import userrouter from './routes/userroutes.js';
 import projectrouter from './routes/projectroutes.js';
@@ -44,6 +34,54 @@ connectDB();
 //     res.json(user);
 //   } catch (error) {
 //     console.error("Error fetching user profile:", error);
+//     res.status(500).json({ message: "Server Error" });
+//   }
+// }
+// );
+
+// import fs from 'fs';
+// import path from 'path';
+// import { fileURLToPath } from 'url';
+
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+// const uploadsDir = path.join(__dirname, 'uploads');
+
+// // Create uploads directory if it doesn't exist
+// if (!fs.existsSync(uploadsDir)) {
+//   fs.mkdirSync(uploadsDir, { recursive: true });
+// }
+
+// // Make uploads directory accessible
+// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// const storage =  multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, 'uploads/');
+//   },
+//   filename: (req, file, cb) => {
+//     cb(null, file.fieldname + '-' + Date.now() + '-' + file.originalname);
+//   }
+// })
+
+// const upload = multer({ storage: storage });
+
+// app.put("/api/user/profile", auth, async (req, res) => {
+//   try {
+//     const user = await User.findById(req.user.userId);
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+//     const { name, email, age, contact, location } = req.body;
+//     user.name = name;
+//     user.email = email;
+//     user.age = age;
+//     user.contact = contact;
+//     user.location = location;
+//     await user.save();
+//     res.json({ message: "Profile updated successfully" });
+//   } catch (error) {
+//     console.error("Error updating user profile:", error);
 //     res.status(500).json({ message: "Server Error" });
 //   }
 // }
@@ -859,51 +897,7 @@ app.use('/api/reset-password', passwordrouter);
 //   }
 // });
 
-// app.post('/api/events/create-event', auth, async (req, res) => {
-//   try {
-//     var { title, description, start, end, image_blob, locations, projects, selected_dropdown } = req.body;
-    
-//     // Basic validation
-//     if (!title || !description || !start || !end) {
-//       return res.status(400).json({ message: 'Missing required fields' });
-//     }
 
-//     // Get the user who is creating the event
-//     const user = await User.findById(req.user.userId);
-//     if (!user) {
-//       return res.status(404).json({ message: 'User not found' });
-//     }
-
-//     // Create new event with empty comments array
-//     const newEvent = new Event({
-//       title,
-//       description,
-//       start: new Date(start),
-//       end: new Date(end),
-//       comments: [], // Initialize with empty comments array
-//       selected_dropdown: selected_dropdown || 'General', // Default if not provided
-//       image_blob: image_blob || 'No Image', // Default if not provided
-//       locations: locations || [user.location], // Default to user's location if not specified
-//       projects: projects || [],
-//       // createdAt will use the default value (current time)
-//     });
-    
-//     console.log('New event:', newEvent, `saving...`);
-    
-
-//     // Save the event to the database
-//     await newEvent.save();
-//     console.log(`saved.`)
-    
-//     res.status(201).json({ 
-//       message: 'Event created successfully', 
-//       event: newEvent 
-//     });
-//   } catch (error) {
-//     console.error('Error creating event:', error);
-//     res.status(500).json({ message: 'Server Error', error: error.message });
-//   }
-// });
 
 // app.post('/api/register-user', auth, async (req, res) => {
 //   try {
