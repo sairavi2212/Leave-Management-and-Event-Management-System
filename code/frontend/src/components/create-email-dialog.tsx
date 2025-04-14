@@ -42,7 +42,7 @@ interface Event {
     createdAt?: Date;
     comments: Comment[];
     selected_dropdown: string;
-    image_blob?: string;
+    image_path?: string;
     locations: string[];
     projects: string[];
 }
@@ -52,7 +52,6 @@ export default function CreateEmail() {
     const [selectedTeam, setSelectedTeam] = useState("Team");
     const [image, setImage] = useState<File | null>(null);
     const [IsLoading, setIsLoading] = useState(false);
-    const [imageBase64, setImageBase64] = useState<string | null>(null);
     const [title, setTitle] = useState<string>("");
     const [description, setDescription] = useState<string>("");
     const [start, setStart] = useState<Date>(new Date());
@@ -95,20 +94,26 @@ export default function CreateEmail() {
 
         setIsLoading(true);
         const token = localStorage.getItem('token');
+        
+        // Create FormData object for file upload
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('description', description);
+        formData.append('start', start.toISOString());
+        formData.append('end', end.toISOString());
+        formData.append('selected_dropdown', selectedDropdown);
+        formData.append('locations', JSON.stringify(locations));
+        formData.append('projects', JSON.stringify(projects));
+        
+        // Append image file if it exists
+        if (image) {
+            formData.append('eventImage', image);
+        }
 
-        axios.post("http://localhost:5000/api/events/create-event", {
-            title: title,
-            description: description,
-            start: start,
-            end: end,
-            comments: comments,
-            selected_dropdown: selectedDropdown,
-            image_blob: imageBase64,
-            locations: locations,
-            projects: projects
-        }, {
+        axios.post("http://localhost:5000/api/events/create-event", formData, {
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data'
             }
         })
             .then(response => {
@@ -120,7 +125,6 @@ export default function CreateEmail() {
                 setSelectedBranch("Branch");
                 setSelectedTeam("Team");
                 setImage(null);
-                setImageBase64(null);
                 setLocations([]);
                 setProjects([]);
             })
@@ -133,16 +137,13 @@ export default function CreateEmail() {
             });
     }
 
-    const handleImageSelect = async (file: File) => {
+    const handleImageSelect = (file: File) => {
         setImage(file);
-        try {
-            const base64Image = await EncryptImage(file);
-            setImageBase64(base64Image);
-            console.log("Encoded image:", base64Image);
-        } catch (error) {
-            console.error("Image encoding failed:", error);
-        }
+        console.log("Selected image:", file.name, `(${(file.size / 1024).toFixed(2)} KB)`);
     };
+
+    // Add this function to preview uploaded images
+    const imagePreview = image ? URL.createObjectURL(image) : null;
 
     return (
         <Dialog>
@@ -234,6 +235,25 @@ export default function CreateEmail() {
                                         {image ? `${image.name} (${(image.size / 1024).toFixed(2)} KB)` : "Upload Image"}
                                     </Button>
                                 </UploadImage>
+                                
+                                {/* Add image preview */}
+                                {imagePreview && (
+                                    <div className="mt-2 relative rounded-md overflow-hidden border border-gray-200">
+                                        <img 
+                                            src={imagePreview} 
+                                            alt="Image preview" 
+                                            className="w-full max-h-[200px] object-contain"
+                                        />
+                                        <Button 
+                                            variant="destructive" 
+                                            size="sm"
+                                            className="absolute top-2 right-2 rounded-full w-8 h-8 p-0 flex items-center justify-center"
+                                            onClick={() => setImage(null)}
+                                        >
+                                            ×
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </CardHeader>
@@ -252,31 +272,4 @@ export default function CreateEmail() {
             </DialogContent>
         </Dialog>
     );
-}
-
-function EncryptImage(imageFile: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-        if (!imageFile) {
-            reject(new Error("No image file provided"));
-            return;
-        }
-
-        const reader = new FileReader();
-
-        reader.onload = (event) => {
-            if (event.target && typeof event.target.result === 'string') {
-                // The result is already a base64 encoded string
-                resolve(event.target.result);
-            } else {
-                reject(new Error("Failed to convert image to base64"));
-            }
-        };
-
-        reader.onerror = () => {
-            reject(new Error("Error reading image file"));
-        };
-
-        // Read the image as a data URL (base64)
-        reader.readAsDataURL(imageFile);
-    });
 }

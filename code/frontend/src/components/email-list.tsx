@@ -13,7 +13,7 @@ interface Event {
     createdAt?: Date;
     comments: Comment[];
     selected_dropdown: string;
-    image_blob?: string;
+    image_path?: string; // Update to image_path instead of image_blob
     locations: string[];
     projects: string[];
 }
@@ -63,7 +63,7 @@ export default function EmailList() {
                                 Title={event.title}
                                 Email={event.title} // Assuming 'event.title' can be used as the 'Email' prop
                                 Description={event.description}
-                                Image={event.image_blob || ""}
+                                Image={event.image_path ? `http://localhost:5000${event.image_path}` : ""}
                             />
                         </div>
                     ))
