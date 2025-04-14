@@ -12,16 +12,21 @@ import {
 } from "@/components/ui/dialog";
 
 export function DatePicker({
-  date,
+  date, 
   setDate,
-  minDate,
-  maxDate,
+  minDate
 }: {
-  date: Date | null;
-  setDate: (date: Date) => void;
-  minDate?: Date;
-  maxDate?: Date;
+  date: Date, 
+  setDate: (date: Date) => void,
+  minDate?: Date
 }) {
+  // Use current date as default minimum date to disable past dates
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Normalize to start of day for accurate comparison
+  
+  // Use provided minDate or today, whichever is later
+  const effectiveMinDate = minDate && minDate > today ? minDate : today;
+  
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -32,7 +37,7 @@ export function DatePicker({
             !date && "text-muted-foreground"
           )}
         >
-          <CalendarIcon />
+          <CalendarIcon className="mr-2 h-4 w-4" />
           {date ? format(date, "PPP") : <span>Pick a date</span>}
         </Button>
       </DialogTrigger>
@@ -42,19 +47,9 @@ export function DatePicker({
         </DialogHeader>
         <Calendar
           mode="single"
-          selected={date || undefined}
-          onSelect={(day) => {
-            if (
-              day &&
-              (!minDate || day >= minDate) &&
-              (!maxDate || day <= maxDate)
-            ) {
-              setDate(day);
-            }
-          }}
-          disabled={(day) => {
-            return (minDate && day < minDate) || (maxDate && day > maxDate) ? true : false;
-          }}
+          selected={date}
+          onSelect={(day) => day && setDate(day)}
+          disabled={(date) => date < effectiveMinDate}
           initialFocus
         />
       </DialogContent>

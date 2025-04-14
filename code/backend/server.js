@@ -9,6 +9,17 @@ import passwordrouter from './routes/passwordroutes.js';
 import leaverouter from './routes/leaveroutes.js';
 import connectDB from './utils/db.js';
 
+const CASUAL_LEAVE_MONTH = 12;
+const EARNED_LEAVE_MONTH = 12;
+const SICK_LEAVE_MONTH = 12;
+
+// Function to calculate difference in months between two dates
+function differenceInMonths(dateA, dateB) {
+  const yearDiff = dateA.getFullYear() - dateB.getFullYear();
+  const monthDiff = dateA.getMonth() - dateB.getMonth();
+  return yearDiff * 12 + monthDiff;
+}
+
 dotenv.config();
 const app = express();
 
@@ -28,16 +39,6 @@ connectDB();
 //     process.exit(1); // Exit process with failure
 //   });
 
-// app.get("api/user/profile", auth, async (req, res) => {
-//   try {
-//     const user = await User.findById(req.user.userId).select("-password");
-//     res.json(user);
-//   } catch (error) {
-//     console.error("Error fetching user profile:", error);
-//     res.status(500).json({ message: "Server Error" });
-//   }
-// }
-// );
 
 // import fs from 'fs';
 // import path from 'path';
