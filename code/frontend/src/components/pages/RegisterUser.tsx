@@ -56,7 +56,7 @@ export default function RegisterUser() {
 
     try {
         const token = localStorage.getItem("token");
-        await axios.post("http://localhost:5000/api/register-user", {
+        await axios.post("http://localhost:5000/api/user/register-user", {
             ...formData,
             age: Number(formData.age),
             contact: Number(formData.contact),

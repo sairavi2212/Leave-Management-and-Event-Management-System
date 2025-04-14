@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/date-picker";
 import { Briefcase, Plus, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import axios from "axios";
 
 // Sample status options
@@ -158,7 +159,7 @@ export default function CreateProject() {
                     Create Project
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[550px] md:max-w-[650px]">
+            <DialogContent className="w-full max-w-[95%] sm:max-w-[550px] md:max-w-[650px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-bold">Create New Project</DialogTitle>
                     <DialogDescription>Fill in the details to create a project.</DialogDescription>

@@ -37,24 +37,15 @@ export default function ProjectsPage() {
         <>
         {state === "loaded" &&
         <Layout>
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                }}
-            >
-                <div
-                    style={{
-                        width: "70vw",
-                        height: "10vh",
-                        display: "flex",
-                        justifyContent: "right",
-                    }}
-                >
-                    {(userRole === "admin" || userRole === "superadmin") && <CreateProject />}
+            <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 mx-auto max-w-7xl">
+                <div className="flex flex-col items-center space-y-6">
+                    <div className="w-full flex justify-end">
+                        {(userRole === "admin" || userRole === "superadmin") && <CreateProject />}
+                    </div>
+                    <div className="w-full">
+                        <ProjectList />
+                    </div>
                 </div>
-                <ProjectList />
             </div>
         </Layout>}
         </>

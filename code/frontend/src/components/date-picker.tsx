@@ -1,4 +1,3 @@
-import * as React from "react"
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 
@@ -12,7 +11,17 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 
-export function DatePicker({date, setDate}: {date: Date, setDate: (date: Date) => void}) {
+export function DatePicker({
+  date,
+  setDate,
+  minDate,
+  maxDate,
+}: {
+  date: Date | null;
+  setDate: (date: Date) => void;
+  minDate?: Date;
+  maxDate?: Date;
+}) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -28,14 +37,27 @@ export function DatePicker({date, setDate}: {date: Date, setDate: (date: Date) =
         </Button>
       </DialogTrigger>
       <DialogContent className="w-auto p-0">
-        <DialogHeader><div style={{width: "100%", height: "10px"}}></div></DialogHeader>
+        <DialogHeader>
+          <div style={{ width: "100%", height: "10px" }}></div>
+        </DialogHeader>
         <Calendar
           mode="single"
-          selected={date}
-          onSelect={(day) => day && setDate(day)}
+          selected={date || undefined}
+          onSelect={(day) => {
+            if (
+              day &&
+              (!minDate || day >= minDate) &&
+              (!maxDate || day <= maxDate)
+            ) {
+              setDate(day);
+            }
+          }}
+          disabled={(day) => {
+            return (minDate && day < minDate) || (maxDate && day > maxDate) ? true : false;
+          }}
           initialFocus
         />
       </DialogContent>
     </Dialog>
-  )
+  );
 }

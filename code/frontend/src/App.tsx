@@ -29,7 +29,7 @@ function App() {
                     <Route path="/admin" element={<AdminLeaves />} />
                     <Route path="/hierarchy" element={<HierarchyTree />} />
                     <Route path="/leave-report" element={<LeaveReport />} />
-                    <Route path="/reset-password" element={<ResetPasswordPage />} />
+                    <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
                     <Route path="/first-time-login" element={<FirstTimeLogin/>} />
                     <Route path="/register-user" element={<RegisterUser />} />
                     <Route path="/projects" element={<ProjectsPage />} />

@@ -43,7 +43,7 @@ export default function LoginPage() {
     
     try {
       // Include the captcha value in your login request
-      const response = await axios.post("http://localhost:5000/api/login", {
+      const response = await axios.post("http://localhost:5000/api/user/login", {
         ...formData,
         captchaToken: captchaValue
       });
@@ -70,8 +70,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-zinc-900 items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="flex min-h-screen bg-zinc-900 items-center justify-center p-4 sm:p-6 md:p-8">
+      <div className="w-full max-w-[90%] sm:max-w-md">
         <div className="animate-fadeIn">
           {/* Logo and title section */}
           <div className="flex justify-center mb-8">
@@ -81,14 +81,14 @@ export default function LoginPage() {
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                 </svg>
               </div>
-              <h1 className="text-2xl font-bold text-white">Eklavya Foundation</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-white">Eklavya Foundation</h1>
             </div>
           </div>
           
           <Card className="border-zinc-800 bg-zinc-800/50 backdrop-blur-sm shadow-xl">
             <CardHeader className="space-y-1 pb-6">
-              <CardTitle className="text-2xl font-bold text-center text-white">Login</CardTitle>
-              <CardDescription className="text-zinc-400 text-center">
+              <CardTitle className="text-xl sm:text-2xl font-bold text-center text-white">Login</CardTitle>
+              <CardDescription className="text-zinc-400 text-center text-sm sm:text-base">
                 Enter your credentials to access your account
               </CardDescription>
             </CardHeader>
@@ -141,13 +141,15 @@ export default function LoginPage() {
                   </div>
 
                   {/* Google reCAPTCHA component */}
-                  <div className="mt-4 flex justify-center">
-                    <ReCAPTCHA
-                      ref={recaptchaRef}
-                      sitekey="6LfTUPQqAAAAALESX_Tmu8Tc9eE3JPmE7bAHFkVa" // Replace with your actual site key
-                      onChange={handleCaptchaChange}
-                      theme="dark" // Use dark theme to match your UI
-                    />
+                  <div className="mt-4 flex justify-center overflow-hidden">
+                    <div className="transform scale-90 sm:scale-100">
+                      <ReCAPTCHA
+                        ref={recaptchaRef}
+                        sitekey="6LfTUPQqAAAAALESX_Tmu8Tc9eE3JPmE7bAHFkVa" // Replace with your actual site key
+                        onChange={handleCaptchaChange}
+                        theme="dark" // Use dark theme to match your UI
+                      />
+                    </div>
                   </div>
                 </div>
 
