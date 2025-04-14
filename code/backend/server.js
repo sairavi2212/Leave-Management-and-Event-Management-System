@@ -12,6 +12,7 @@ import RoleHierarchy from './models/RoleHierarchy.js';  // Import the RoleHierar
 import Project from './models/projects.js';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import multer from 'multer';
 
 dotenv.config();
 const app = express();
@@ -40,6 +41,33 @@ mongoose.connect(MONGODB_URI)
 //   }
 // }
 // );
+
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.join(__dirname, 'uploads');
+
+// Create uploads directory if it doesn't exist
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Make uploads directory accessible
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+const storage =  multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.fieldname + '-' + Date.now() + '-' + file.originalname);
+  }
+})
+
+const upload = multer({ storage: storage });
 
 app.put("/api/user/profile", auth, async (req, res) => {
   try {
@@ -760,9 +788,14 @@ app.post('/api/reset-password/reset/:token', async (req, res) => {
   }
 });
 
-app.post('/api/events/create-event', auth, async (req, res) => {
+app.post('/api/events/create-event', auth, upload.single('eventImage'), async (req, res) => {
   try {
-    var { title, description, start, end, image_blob, locations, projects, selected_dropdown } = req.body;
+    // Get data from request body (now form-data format)
+    const { title, description, start, end, selected_dropdown } = req.body;
+    
+    // Parse JSON strings for arrays
+    const locations = req.body.locations ? JSON.parse(req.body.locations) : [];
+    const projects = req.body.projects ? JSON.parse(req.body.projects) : [];
     
     // Basic validation
     if (!title || !description || !start || !end) {
@@ -775,7 +808,13 @@ app.post('/api/events/create-event', auth, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Create new event with empty comments array
+    // Get image path if file was uploaded
+    let image_path = null;
+    if (req.file) {
+      image_path = `/uploads/${req.file.filename}`;
+    }
+
+    // Create new event
     const newEvent = new Event({
       title,
       description,
@@ -783,18 +822,17 @@ app.post('/api/events/create-event', auth, async (req, res) => {
       end: new Date(end),
       comments: [], // Initialize with empty comments array
       selected_dropdown: selected_dropdown || 'General', // Default if not provided
-      image_blob: image_blob || 'No Image', // Default if not provided
-      locations: locations || [user.location], // Default to user's location if not specified
+      image_path: image_path, // Store path instead of blob
+      locations: locations.length > 0 ? locations : [user.location], // Default to user's location if not specified
       projects: projects || [],
       // createdAt will use the default value (current time)
     });
     
-    console.log('New event:', newEvent, `saving...`);
+    console.log('New event:', newEvent, 'saving...');
     
-
     // Save the event to the database
     await newEvent.save();
-    console.log(`saved.`)
+    console.log('Event saved successfully');
     
     res.status(201).json({ 
       message: 'Event created successfully', 

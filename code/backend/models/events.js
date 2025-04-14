@@ -1,48 +1,48 @@
 import mongoose from 'mongoose';
 
-const EventsSchema = new mongoose.Schema({
-    title: {
-        type: String,
-        required: true,
-    },
-    description: {
-        type: String,
-        required: true,
-    },
-    start: {
-        type: Date,
-        required: true,
-    },
-    end: {
-        type: Date,
-        required: true,
-    },
+const eventSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  start: {
+    type: Date,
+    required: true
+  },
+  end: {
+    type: Date,
+    required: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  comments: [{
+    userId: String,
+    text: String,
     createdAt: {
-        type: Date,
-        default: Date.now,
-    },
-    comments: {
-        type: Array,
-        required: true,
-    },
-    selected_dropdown: {
-        type: String,
-        required: true,
-    },
-    image_blob: {
-        type: String,
-        required: false,
-    },
-    locations: {
-        type: Array,
-        required: true,
-    },
-    projects: {
-        type: Array,
-        required: true,
-    },
+      type: Date,
+      default: Date.now
+    }
+  }],
+  selected_dropdown: {
+    type: String,
+    default: 'General'
+  },
+  image_path: {  // Make sure this field exists
+    type: String
+  },
+  locations: [{
+    type: String
+  }],
+  projects: [{
+    type: String
+  }]
 });
 
-const Event = mongoose.model('Event', EventsSchema);
-
+const Event = mongoose.model('Event', eventSchema);
 export default Event;
