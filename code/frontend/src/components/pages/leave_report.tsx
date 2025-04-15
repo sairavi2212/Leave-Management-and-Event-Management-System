@@ -53,6 +53,13 @@ interface HistoricalLeaveData {
     registrationDate: string;
 }
 
+interface MonthlyHistory {
+    userName: string;
+    userMonth : number; // Month of registration
+    userYear: number; // Year of registration
+    monthly: Array<any>; // Or use a more specific type like Array<{ month: string, used: number }>
+}
+
 const months = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
@@ -118,6 +125,7 @@ const LeaveReport = () => {
     const [historicalLeaveData, setHistoricalLeaveData] = useState<HistoricalLeaveData[]>([]);
     const [isLoadingDetailed, setIsLoadingDetailed] = useState(false);
     const [isLoadingHistorical, setIsLoadingHistorical] = useState(false);
+    const [monthlyhistory, setMonthlyHistory] = useState<MonthlyHistory[]>([]);
 
     // Fetch summary leave data for the selected month and year
     useEffect(() => {
@@ -199,6 +207,7 @@ const LeaveReport = () => {
             if (response.ok) {
                 const data = await response.json();
                 setHistoricalLeaveData(data);
+                setMonthlyHistory(data);
                 return data;
             }
             return [];
@@ -219,18 +228,7 @@ const LeaveReport = () => {
             return;
         }
 
-        // Group leave data by user using a different approach
-        const groupedByUser: Record<string, DetailedLeaveData[]> = {};
-        
-        // Populate the groupedByUser object
-        for (const leave of data) {
-            if (!groupedByUser[leave.userName]) {
-                groupedByUser[leave.userName] = [];
-            }
-            groupedByUser[leave.userName].push(leave);
-        }
-
-        // Create workbook with a worksheet for each user
+        // Create workbook with only summary sheet
         const workbook = XLSX.utils.book_new();
         
         // Add summary sheet
@@ -246,32 +244,10 @@ const LeaveReport = () => {
         const summarySheet = XLSX.utils.json_to_sheet(summaryData);
         XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
         
-        // Create detailed sheet for each user
-        Object.entries(groupedByUser).forEach((entry) => {
-            const userName = entry[0];
-            const userLeaves = entry[1] as DetailedLeaveData[];
-            
-            // Format data for Excel
-            const userData = userLeaves.map((leave: DetailedLeaveData) => ({
-                'Leave Type': leave.leaveType,
-                'Start Date': format(new Date(leave.startDate), 'yyyy-MM-dd'),
-                'End Date': format(new Date(leave.endDate), 'yyyy-MM-dd'),
-                'Duration (days)': leave.duration,
-                'Status': leave.status,
-                'Reason': leave.reason,
-                'Submitted On': format(new Date(leave.submittedAt), 'yyyy-MM-dd')
-            }));
-            
-            const userSheet = XLSX.utils.json_to_sheet(userData);
-            // Limit sheet name length to 31 chars (Excel limitation)
-            const safeSheetName = userName.substring(0, 31);
-            XLSX.utils.book_append_sheet(workbook, userSheet, safeSheetName);
-        });
-        
         // Generate Excel file
         const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
         const fileData = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
-        saveAs(fileData, `detailed-leave-report-${months[selectedMonth]}-${selectedYear}.xlsx`);
+        saveAs(fileData, `leave-report-${months[selectedMonth]}-${selectedYear}.xlsx`);
     };
 
     // Export complete historical leave data to Excel
@@ -279,6 +255,7 @@ const LeaveReport = () => {
         try {
             // Fetch historical leave data if not already loaded
             const data = historicalLeaveData.length > 0 ? historicalLeaveData : await fetchHistoricalLeaveData();
+
             if (!data || data.length === 0) {
                 alert('No historical leave data available for export');
                 return;
@@ -287,55 +264,7 @@ const LeaveReport = () => {
             // Create workbook
             const workbook = XLSX.utils.book_new();
             
-            // Add a summary sheet with all the important information
-            const summaryData = data.map((user: HistoricalLeaveData) => {
-                try {
-                    const registrationDate = new Date(user.registrationDate);
-                    const now = new Date();
-                    const monthsSinceRegistration = differenceInMonths(now, registrationDate) + 1;
-                    
-                    return {
-                        'Employee Name': user.userName || 'Unknown',
-                        'Registration Date': format(registrationDate, 'yyyy-MM-dd'),
-                        'Months Active': monthsSinceRegistration,
-                        'Sick Leave Allocated': user.allocated?.sick || 0,
-                        'Sick Leave Used': user.used?.sick || 0,
-                        'Sick Leave Remaining': user.remaining?.sick || 0,
-                        'Casual Leave Allocated': user.allocated?.casual || 0,
-                        'Casual Leave Used': user.used?.casual || 0,
-                        'Casual Leave Remaining': user.remaining?.casual || 0,
-                        'Earned Leave Allocated': user.allocated?.earned || 0,
-                        'Earned Leave Used': user.used?.earned || 0,
-                        'Earned Leave Remaining': user.remaining?.earned || 0,
-                        'Total Allocated': 
-                            (user.allocated?.sick || 0) + 
-                            (user.allocated?.casual || 0) + 
-                            (user.allocated?.earned || 0),
-                        'Total Used': 
-                            (user.used?.sick || 0) + 
-                            (user.used?.casual || 0) + 
-                            (user.used?.earned || 0),
-                        'Total Remaining': 
-                            (user.remaining?.sick || 0) + 
-                            (user.remaining?.casual || 0) + 
-                            (user.remaining?.earned || 0)
-                    };
-                } catch (error) {
-                    console.error('Error processing user data:', error);
-                    return {
-                        'Employee Name': user.userName || 'Error processing user',
-                        'Error': 'Could not process user data'
-                    };
-                }
-            });
-            
-            const summarySheet = XLSX.utils.json_to_sheet(summaryData);
-            XLSX.utils.book_append_sheet(workbook, summarySheet, 'Leave Summary');
-            
-            // Create detailed year-month-category hierarchical sheet
-            // We'll create a structured format with years as main columns, months as subcolumns,
-            // and each leave type (sick, casual, earned) as subcolumns within each month
-            
+            // Only create the Yearly Monthly Breakdown sheet
             const yearMonthSheet = XLSX.utils.aoa_to_sheet([[]]);
             XLSX.utils.book_append_sheet(workbook, yearMonthSheet, 'Yearly Monthly Breakdown');
             
@@ -381,29 +310,40 @@ const LeaveReport = () => {
             
             // Generate rows for each user
             let rowIndex = 4; // Start after the header rows
-            
-            data.forEach((user: HistoricalLeaveData) => {
+            data.forEach((user: MonthlyHistory) => {
                 try {
                     const row = [];
                     row.push(user.userName || 'Unknown');
-                    
-                    // Assuming the backend would provide monthly breakdown data
-                    // For demonstration, we'll fill with placeholder values
-                    // In a real implementation, you would access actual monthly data from the API
-                    
+                    const userMonth = user.userMonth;
+                    const userYear = user.userYear;
+                    const userLeaves = user.monthly;
                     yearsToShow.forEach(year => {
                         for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
-                            // For each month, add values for sick, casual, earned leave remaining
-                            // These would come from your API data in a real implementation
-                            
-                            // For demo: different remaining values based on month (in a real app, get from API)
-                            const sickRemaining = user.remaining?.sick || 0;
-                            const casualRemaining = user.remaining?.casual || 0;
-                            const earnedRemaining = user.remaining?.earned || 0;
-                            
-                            row.push(sickRemaining);
-                            row.push(casualRemaining);
-                            row.push(earnedRemaining);
+                            if (year === userYear && monthIndex < userMonth) {
+                                row.push(0);
+                                row.push(0);
+                                row.push(0);
+                                continue; // Skip months before the user's registration month
+                            }
+                            if(year < userYear){
+                                row.push(0);
+                                row.push(0);
+                                row.push(0);
+                                continue; // Skip years before the user's registration year
+                            }
+                            const monthData = userLeaves.find((leave: any) => leave.month === monthIndex && leave.year === year);
+                            if(!monthData) {
+                                row.push(0); // Sick leave
+                                row.push(0); // Casual leave
+                                row.push(0); // Earned leave
+                                continue;
+                            }
+                            const remaining = monthData ? monthData.remaining : 0;
+                            console.log("hi");
+                            console.log(remaining.sick);
+                            row.push(remaining.sick || 0); // Sick leave
+                            row.push(remaining.casual || 0); // Casual leave
+                            row.push(remaining.earned || 0); // Earned leave
                         }
                     });
                     
@@ -426,10 +366,6 @@ const LeaveReport = () => {
                 const startCol = 1 + (i * 36); // Column B for first year, AK for second, etc.
                 const endCol = startCol + 35;  // 36 columns per year
                 
-                // Convert column indices to Excel column references (e.g., 1 -> A, 2 -> B)
-                const startColRef = XLSX.utils.encode_col(startCol);
-                const endColRef = XLSX.utils.encode_col(endCol);
-                
                 mergeCells.push({ s: { r: 0, c: startCol }, e: { r: 0, c: endCol } });
             }
             
@@ -445,40 +381,6 @@ const LeaveReport = () => {
             
             // Apply the merges to the worksheet
             yearMonthSheet['!merges'] = mergeCells;
-            
-            // Format the headers with background colors and borders
-            // Note: This would require a more complex implementation using the xlsx-style
-            // library which is an extension to xlsx
-            
-            // Create individual sheets for each leave type with simplified data (keep for reference)
-            const leaveTypes = [
-                { id: 'sick', name: 'Sick Leave' },
-                { id: 'casual', name: 'Casual Leave' },
-                { id: 'earned', name: 'Earned Leave' }
-            ];
-            
-            leaveTypes.forEach(({ id, name }) => {
-                const typeData = data.map((user: HistoricalLeaveData) => {
-                    try {
-                        return {
-                            'Employee': user.userName || 'Unknown',
-                            'Registration Date': format(new Date(user.registrationDate), 'yyyy-MM-dd'),
-                            'Allocated': user.allocated?.[id as keyof LeaveBalance] || 0,
-                            'Used': user.used?.[id as keyof LeaveBalance] || 0,
-                            'Remaining': user.remaining?.[id as keyof LeaveBalance] || 0
-                        };
-                    } catch (error) {
-                        console.error(`Error processing ${name} data for user:`, error);
-                        return {
-                            'Employee': user.userName || 'Error',
-                            'Error': `Could not process ${name} data`
-                        };
-                    }
-                });
-                
-                const typeSheet = XLSX.utils.json_to_sheet(typeData);
-                XLSX.utils.book_append_sheet(workbook, typeSheet, name);
-            });
             
             // Generate Excel file
             const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
