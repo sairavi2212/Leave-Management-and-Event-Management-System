@@ -139,6 +139,12 @@ export default function EmailList() {
                                         Email={event.title}
                                         Description={event.description}
                                         Image={event.image_path ? `http://localhost:5000${event.image_path}` : ""}
+                                        CreatedAt={event.createdAt}
+                                        StartDate={event.start}
+                                        EndDate={event.end}
+                                        Category={event.selected_dropdown}
+                                        Locations={event.locations}
+                                        Projects={event.projects}
                                     />
                                 </motion.div>
                             ))}
