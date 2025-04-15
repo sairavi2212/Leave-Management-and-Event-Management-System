@@ -2,162 +2,38 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, parseISO } from 'date-fns';
-import { CalendarIcon, CheckCircle2, LoaderCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { format } from 'date-fns';
+import { CalendarIcon, CheckCircle2, LoaderCircle, AlertCircle, Info, XCircle } from 'lucide-react';
 import Layout from "@/components/layout";
-import { useSidebar } from '@/components/ui/sidebar';
-import { DatePicker } from "@/components/date-picker"; // Add this import
+import { DatePicker } from "@/components/date-picker"; 
 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
+// Interface for leave balance
+interface LeaveBalance {
+    sick: number;
+    casual: number;
+    earned: number;
+}
 
+interface FullLeaveBalance {
+    allocated: LeaveBalance;
+    used: LeaveBalance;
+    remaining: LeaveBalance;
+    monthsSinceRegistration: number;
+}
 
-// Custom Calendar Component - Completely built with Tailwind CSS
-const TailwindCalendar = ({
-    selected,
-    onSelect,
-    disabledDates,
-}: {
-    selected?: Date | null,
-    onSelect: (date: Date) => void,
-    disabledDates?: (date: Date) => boolean,
-    minDate?: Date | null
-}) => {
-    const [currentMonth, setCurrentMonth] = useState(selected || new Date());
-
-    // Set month based on selected date
-    useEffect(() => {
-        if (selected) {
-            setCurrentMonth(selected);
-        }
-    }, [selected]);
-
-    const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(currentMonth);
-    const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-
-    // Calculate weeks (for proper grid display)
-    const weeks: Date[][] = [];
-    let week: Date[] = [];
-
-    // Add empty days for the start of the month
-    const startDay = monthStart.getDay();
-    for (let i = 0; i < startDay; i++) {
-        week.push(new Date(0)); // Placeholder date
-    }
-
-    // Add actual days
-    daysInMonth.forEach((day) => {
-        week.push(day);
-        if (week.length === 7) {
-            weeks.push(week);
-            week = [];
-        }
-    });
-
-    // Add empty days for the end of the month
-    if (week.length > 0) {
-        for (let i = week.length; i < 7; i++) {
-            week.push(new Date(0)); // Placeholder date
-        }
-        weeks.push(week);
-    }
-
-    const goToPreviousMonth = () => {
-        setCurrentMonth(subMonths(currentMonth, 1));
-    };
-
-    const goToNextMonth = () => {
-        setCurrentMonth(addMonths(currentMonth, 1));
-    };
-
-    const handleDayClick = (day: Date) => {
-        if (day.getTime() === 0) return; // Skip placeholder dates
-
-        if (disabledDates && disabledDates(day)) {
-            return; // Skip disabled dates
-        }
-
-        onSelect(day);
-    };
-
-    return (
-        <div className="bg-[#1a2234] rounded-lg shadow-lg overflow-hidden">
-            {/* Header with month/year and navigation */}
-            <div className="p-4 border-b border-gray-700 flex justify-between items-center">
-                <button
-                    type="button"
-                    onClick={goToPreviousMonth}
-                    className="p-2 rounded-full text-gray-300 hover:text-white hover:bg-gray-700"
-                >
-                    <ChevronLeft size={18} />
-                </button>
-                <h2 className="text-lg font-medium text-white">
-                    {format(currentMonth, 'MMMM yyyy')}
-                </h2>
-                <button
-                    type="button"
-                    onClick={goToNextMonth}
-                    className="p-2 rounded-full text-gray-300 hover:text-white hover:bg-gray-700"
-                >
-                    <ChevronRight size={18} />
-                </button>
-            </div>
-
-            {/* Calendar Grid */}
-            <div className="p-3">
-                {/* Days of week header */}
-                <div className="grid grid-cols-7 mb-1">
-                    {daysOfWeek.map((day) => (
-                        <div key={day} className="text-center text-xs font-medium text-gray-400 py-2">
-                            {day}
-                        </div>
-                    ))}
-                </div>
-
-                {/* Calendar days */}
-                {weeks.map((week, weekIndex) => (
-                    <div key={weekIndex} className="grid grid-cols-7">
-                        {week.map((day, dayIndex) => {
-                            const isPlaceholder = day.getTime() === 0;
-                            const isDisabled = !isPlaceholder && disabledDates ? disabledDates(day) : false;
-                            const isSelectedDay = selected ? isSameDay(day, selected) : false;
-                            const isTodayDate = !isPlaceholder && isToday(day);
-
-                            return (
-                                <div
-                                    key={dayIndex}
-                                    className="p-1 relative"
-                                >
-                                    <button
-                                        type="button"
-                                        disabled={isPlaceholder || isDisabled}
-                                        onClick={() => handleDayClick(day)}
-                                        className={`
-                      w-10 h-10 mx-auto flex items-center justify-center rounded-full text-sm
-                      ${isPlaceholder ? 'invisible' : ''}
-                      ${isDisabled ? 'text-gray-600 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-700'}
-                      ${isSelectedDay ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}
-                      ${!isSelectedDay && !isDisabled && !isPlaceholder ? 'text-gray-300 hover:text-white' : ''}
-                      ${isTodayDate && !isSelectedDay ? 'border border-blue-400 bg-blue-400/10' : ''}
-                    `}
-                                    >
-                                        {!isPlaceholder && format(day, 'd')}
-                                    </button>
-                                </div>
-                            );
-                        })}
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
+// Leave allocation per month
+const LEAVES_PER_MONTH = {
+    sick: 12,
+    casual: 12, 
+    earned: 12
 };
 
 const formSchema = z.object({
@@ -178,18 +54,18 @@ const formSchema = z.object({
 
 const Leaves: React.FC = () => {
 
-    let isSidebarOpen = false;
-    try {
-        // Try to get the sidebar context safely
-        const context = useSidebar();
-        isSidebarOpen = context.open;
-    } catch (error) {
-        console.log("Sidebar context not available, using default state");
-        // Use default false value
-    }
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [leaveDuration, setLeaveDuration] = useState<number | null>(null);
+    const [leaveBalance, setLeaveBalance] = useState<FullLeaveBalance | null>(null);
+    
+    // For error dialog
+    const [errorDialogOpen, setErrorDialogOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<{leaveType: string, duration: number, shortfall: number}>({
+        leaveType: '',
+        duration: 0,
+        shortfall: 0
+    });
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -197,6 +73,40 @@ const Leaves: React.FC = () => {
             reason: "",
         },
     });
+
+    // Fetch leave balance
+    useEffect(() => {
+        async function fetchLeaveBalance() {
+            try {
+                const response = await fetch('http://localhost:5000/api/leaves/balance', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch leave balance');
+                }
+
+                const data: FullLeaveBalance = await response.json();
+                setLeaveBalance(data);
+            } catch (error) {
+                console.error("Error fetching leave balance:", error);
+            }
+        }
+
+        fetchLeaveBalance();
+    }, [submitted]);
+
+    // Leave balance check before submission
+    const validateLeaveBalance = (): boolean => {
+        if (!leaveBalance || !leaveDuration) return true;
+        
+        const leaveType = form.getValues("leaveType") as keyof LeaveBalance;
+        if (!leaveType) return true;
+        
+        return leaveBalance.remaining[leaveType] >= leaveDuration;
+    };
 
     // Calculate leave duration
     useEffect(() => {
@@ -212,10 +122,30 @@ const Leaves: React.FC = () => {
         }
     }, [form.watch('startDate'), form.watch('endDate')]);
 
-   // Update your onSubmit function with this improved version
+   // Updated onSubmit function with improved error handling
 async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
+        // Check if user has enough leave balance
+        const leaveType = values.leaveType as keyof LeaveBalance;
+        
+        if (!validateLeaveBalance()) {
+            // Calculate shortfall
+            const shortfall = Math.abs(leaveDuration! - leaveBalance!.remaining[leaveType]);
+            
+            // Set error message data for the dialog
+            setErrorMessage({
+                leaveType: leaveType,
+                duration: leaveDuration!,
+                shortfall: shortfall
+            });
+            
+            // Open error dialog instead of alert
+            setErrorDialogOpen(true);
+            setIsSubmitting(false);
+            return;
+        }
+        
         const formattedData = {
             ...values,
             startDate: format(values.startDate, "yyyy-MM-dd"),
@@ -243,7 +173,7 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
         // Improved form reset logic
         setTimeout(() => {
             form.reset({
-                leaveType: undefined,
+                leaveType: "",
                 startDate: undefined,
                 endDate: undefined,
                 reason: "",
@@ -274,7 +204,80 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="px-6 py-8 md:px-8">
-                            {submitted ? (
+    {/* Leave Balance Section */}
+    {!submitted && leaveBalance && (
+        <div className="mb-8">
+            <h3 className="text-xl font-medium mb-4 text-white">Your Leave Balance</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-[#273344] border border-[#344056] rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                        <h4 className="font-medium text-gray-300">Sick Leave</h4>
+                        <span className={`px-2 py-1 rounded-md text-sm font-medium ${
+                            leaveBalance.remaining.sick > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                        }`}>
+                            {leaveBalance.remaining.sick} day{leaveBalance.remaining.sick !== 1 ? 's' : ''} left
+                        </span>
+                    </div>
+                    <div className="mt-3 text-sm text-gray-400">
+                        <div className="flex justify-between mt-1">
+                            <span>Total allocated:</span>
+                            <span>{leaveBalance.allocated.sick} days</span>
+                        </div>
+                        <div className="flex justify-between mt-1">
+                            <span>Used:</span>
+                            <span>{leaveBalance.used.sick} days</span>
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-[#273344] border border-[#344056] rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                        <h4 className="font-medium text-gray-300">Casual Leave</h4>
+                        <span className={`px-2 py-1 rounded-md text-sm font-medium ${
+                            leaveBalance.remaining.casual > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                        }`}>
+                            {leaveBalance.remaining.casual} day{leaveBalance.remaining.casual !== 1 ? 's' : ''} left
+                        </span>
+                    </div>
+                    <div className="mt-3 text-sm text-gray-400">
+                        <div className="flex justify-between mt-1">
+                            <span>Total allocated:</span>
+                            <span>{leaveBalance.allocated.casual} days</span>
+                        </div>
+                        <div className="flex justify-between mt-1">
+                            <span>Used:</span>
+                            <span>{leaveBalance.used.casual} days</span>
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-[#273344] border border-[#344056] rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                        <h4 className="font-medium text-gray-300">Earned Leave</h4>
+                        <span className={`px-2 py-1 rounded-md text-sm font-medium ${
+                            leaveBalance.remaining.earned > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                        }`}>
+                            {leaveBalance.remaining.earned} day{leaveBalance.remaining.earned !== 1 ? 's' : ''} left
+                        </span>
+                    </div>
+                    <div className="mt-3 text-sm text-gray-400">
+                        <div className="flex justify-between mt-1">
+                            <span>Total allocated:</span>
+                            <span>{leaveBalance.allocated.earned} days</span>
+                        </div>
+                        <div className="flex justify-between mt-1">
+                            <span>Used:</span>
+                            <span>{leaveBalance.used.earned} days</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className="mt-3 text-sm text-gray-400 flex items-center">
+                <Info size={16} className="mr-1" /> 
+                <span>Leaves are allocated at the rate of {LEAVES_PER_MONTH.sick} per month for each type since your registration date.</span>
+            </div>
+        </div>
+    )}
+
+    {submitted ? (
                                 <div className="flex flex-col items-center py-12 text-center">
                                     <CheckCircle2 className="h-16 w-16 text-green-500 mb-6" />
                                     <h3 className="text-xl font-medium mb-2 text-white">
@@ -293,7 +296,10 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-base text-gray-200">Leave Type</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <Select onValueChange={(value) => {
+                                                        field.onChange(value);
+                                                        // This will trigger a re-render to show the selected leave type's remaining balance
+                                                    }} defaultValue={field.value}>
                                                         <FormControl>
                                                             <SelectTrigger className="h-12 text-base bg-[#2d3748] border-gray-700 text-white">
                                                                 <SelectValue placeholder="Select leave type" />
@@ -301,17 +307,49 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                                                         </FormControl>
                                                         <SelectContent className="bg-[#2d3748] border-gray-700 text-white">
                                                             <SelectItem value="sick" className="text-base py-3 focus:bg-[#3b4758] focus:text-white">
-                                                                Sick Leave
+                                                                Sick Leave {leaveBalance && <span className="text-sm ml-2">({leaveBalance.remaining.sick} left)</span>}
                                                             </SelectItem>
                                                             <SelectItem value="casual" className="text-base py-3 focus:bg-[#3b4758] focus:text-white">
-                                                                Casual Leave
+                                                                Casual Leave {leaveBalance && <span className="text-sm ml-2">({leaveBalance.remaining.casual} left)</span>}
                                                             </SelectItem>
                                                             <SelectItem value="earned" className="text-base py-3 focus:bg-[#3b4758] focus:text-white">
-                                                                Earned Leave
+                                                                Earned Leave {leaveBalance && <span className="text-sm ml-2">({leaveBalance.remaining.earned} left)</span>}
                                                             </SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage className="text-red-400" />
+                                                    {field.value && leaveBalance && (
+                                                        <div className="mt-2 text-sm">
+                                                            <span className={`font-medium ${leaveBalance.remaining[field.value as keyof LeaveBalance] > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                                {leaveBalance.remaining[field.value as keyof LeaveBalance]} days remaining
+                                                            </span> of {leaveBalance.allocated[field.value as keyof LeaveBalance]} allocated
+                                                        </div>
+                                                    )}
+                                                    {field.value && leaveBalance && leaveDuration && (
+                                                        <div className="mt-2 p-2 rounded-md border bg-opacity-20 text-sm" 
+                                                             style={{
+                                                                 borderColor: leaveBalance.remaining[field.value as keyof LeaveBalance] >= leaveDuration ? '#4ade80' : '#f87171',
+                                                                 backgroundColor: leaveBalance.remaining[field.value as keyof LeaveBalance] >= leaveDuration ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)'
+                                                             }}>
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="flex items-center">
+                                                                    {leaveBalance.remaining[field.value as keyof LeaveBalance] >= leaveDuration ? 
+                                                                        <CheckCircle2 className="h-4 w-4 text-green-400 mr-1" /> : 
+                                                                        <AlertCircle className="h-4 w-4 text-red-400 mr-1" />
+                                                                    }
+                                                                    <span className={leaveBalance.remaining[field.value as keyof LeaveBalance] >= leaveDuration ? 'text-green-400' : 'text-red-400'}>
+                                                                        {leaveDuration} day{leaveDuration !== 1 ? 's' : ''} requested
+                                                                    </span>
+                                                                </span>
+                                                                <span className={`font-medium ${leaveBalance.remaining[field.value as keyof LeaveBalance] >= leaveDuration ? 'text-green-400' : 'text-red-400'}`}>
+                                                                    {leaveBalance.remaining[field.value as keyof LeaveBalance] - leaveDuration >= 0 ? 
+                                                                        `${leaveBalance.remaining[field.value as keyof LeaveBalance] - leaveDuration} days will remain` : 
+                                                                        `Insufficient balance (${Math.abs(leaveBalance.remaining[field.value as keyof LeaveBalance] - leaveDuration)} days short)`
+                                                                    }
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </FormItem>
                                             )}
                                         />
@@ -330,10 +368,15 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                                                                 field.onChange(date);
                                                                 // Reset end date if it's before new start date
                                                                 const endDate = form.getValues("endDate");
-                                                                if (endDate && date > endDate) {
-                                                                    form.setValue("endDate", null as any);
+                                                                if (endDate && date && date > endDate) {
+                                                                    // Use a new Date instance that's far in the future, then clear it via form.reset later
+                                                                    form.setValue("endDate", new Date());
+                                                                    // Then use setTimeout to clear both dates properly
+                                                                    setTimeout(() => {
+                                                                        form.setValue("endDate", undefined as any);
+                                                                    }, 0);
                                                                 }
-                                                            }} 
+                                                            }}
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-red-400" />
@@ -350,6 +393,7 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                                                         <DatePicker 
                                                             date={field.value}
                                                             setDate={(date) => field.onChange(date)}
+                                                            disabledDates={(date) => form.getValues("startDate") && date < form.getValues("startDate")}
                                                         />
                                                     </FormControl>
                                                     <FormMessage className="text-red-400" />
@@ -428,6 +472,68 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
                     </Card>
                 </div>
             </div>
+
+            {/* Error Dialog for Insufficient Leave Balance */}
+            <Dialog open={errorDialogOpen} onOpenChange={setErrorDialogOpen}>
+                <DialogContent className="sm:max-w-[425px] bg-[#1e293b] border-0 text-white">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-xl">
+                            <XCircle className="h-6 w-6 text-red-500" />
+                            Insufficient Leave Balance
+                        </DialogTitle>
+                        <DialogDescription className="text-gray-300">
+                            You don't have enough leave balance for this request.
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="py-4 space-y-4">
+                        <div className="bg-red-500/10 border border-red-500/30 rounded-md p-4">
+                            <h4 className="text-red-300 font-medium flex items-center mb-2">
+                                <AlertCircle className="h-5 w-5 mr-2" /> Leave Balance Issue
+                            </h4>
+                            <div className="space-y-2 text-sm">
+                                <div className="flex justify-between text-gray-300">
+                                    <span>Leave type:</span>
+                                    <span className="font-medium text-white capitalize">{errorMessage.leaveType} Leave</span>
+                                </div>
+                                <div className="flex justify-between text-gray-300">
+                                    <span>Requested duration:</span>
+                                    <span className="font-medium text-white">{errorMessage.duration} days</span>
+                                </div>
+                                <div className="flex justify-between text-gray-300">
+                                    <span>Available balance:</span>
+                                    <span className="font-medium text-white">
+                                        {leaveBalance && errorMessage.leaveType && 
+                                         leaveBalance.remaining[errorMessage.leaveType as keyof LeaveBalance]} days
+                                    </span>
+                                </div>
+                                <div className="flex justify-between text-red-300 font-medium">
+                                    <span>Shortfall:</span>
+                                    <span>{errorMessage.shortfall} days</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="text-gray-300 text-sm">
+                            Please consider one of the following options:
+                            <ul className="list-disc pl-5 mt-2 space-y-1">
+                                <li>Reduce the duration of your leave request</li>
+                                <li>Choose a different leave type with sufficient balance</li>
+                                <li>Split your leave across multiple leave types</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <DialogFooter>
+                        <Button
+                            className="w-full bg-blue-600 hover:bg-blue-700"
+                            onClick={() => setErrorDialogOpen(false)}
+                        >
+                            I Understand
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Layout>
     );
 };
