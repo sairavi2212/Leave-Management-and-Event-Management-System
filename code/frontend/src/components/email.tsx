@@ -33,6 +33,26 @@ export default function Email({
 }) {
     const [imageError, setImageError] = useState(false);
     
+    // Format the image URL correctly based on the path format
+    const getImageUrl = (imagePath: string) => {
+        if (!imagePath) return '';
+        
+        // If it's already a full URL, use it as is
+        if (imagePath.startsWith('http')) {
+            return imagePath;
+        }
+        
+        // If it's a path starting with /uploads, prepend the API base URL
+        if (imagePath.startsWith('/uploads')) {
+            // Get API URL from environment or use default
+            const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            return `${apiBaseUrl}${imagePath}`;
+        }
+        
+        // Return the path as is if it doesn't match any of the above cases
+        return imagePath;
+    };
+    
     const handleImageError = () => {
         console.error("Failed to load image:", Image);
         setImageError(true);
@@ -76,7 +96,7 @@ export default function Email({
                                 {Image && !imageError ? (
                                     <div className="w-full text-center">
                                         <img 
-                                            src={Image} 
+                                            src={getImageUrl(Image)} 
                                             alt="Event attachment" 
                                             className="max-w-full max-h-[40vh] md:max-h-[50vh] object-contain mx-auto rounded-md" 
                                             onError={handleImageError}
