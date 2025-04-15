@@ -8,6 +8,8 @@ import projectrouter from './routes/projectroutes.js';
 import passwordrouter from './routes/passwordroutes.js';
 import leaverouter from './routes/leaveroutes.js';
 import connectDB from './utils/db.js';
+import { fileURLToPath } from 'url'; // Add this import
+import path from 'path'; // Make sure path is imported
 
 
 dotenv.config();
@@ -18,6 +20,11 @@ app.use(cors());
 app.use(express.json());
 
 connectDB();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // MongoDB Connection
 // const MONGODB_URI = 'mongodb+srv://Users:craak@cluster0.qdosc.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';

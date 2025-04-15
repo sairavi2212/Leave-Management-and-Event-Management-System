@@ -3,9 +3,10 @@ import EmailList from "@/components/email-list";
 import CreateEmail from "@/components/create-email-dialog";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function EventsPage() {
-
     const [superUser, setSuperUser] = useState("");
     const [state, setState] = useState("loading");
 
@@ -34,30 +35,43 @@ export default function EventsPage() {
         checkSuperUser();
     }, []);
 
-    return (
-        <>
-        {state === "loaded" &&
-        <Layout>
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                }}
-            >
-                <div
-                    style={{
-                        width: "70vw",
-                        height: "10vh",
-                        display: "flex",
-                        justifyContent: "right",
-                    }}
-                >
-                    {(superUser === "admin" || superUser === "superadmin") && <CreateEmail />}
+    if (state === "loading") {
+        return (
+            <Layout>
+                <div className="h-screen flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <span className="ml-2 text-lg">Loading events...</span>
                 </div>
+            </Layout>
+        );
+    }
+
+    return (
+        <Layout>
+            <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                transition={{ duration: 0.5 }}
+                className="container mx-auto px-4 md:px-8 py-8 max-w-full lg:max-w-[90%] 2xl:max-w-[80%]"
+            >
+                <div className="mb-8">
+                    <h1 className="text-3xl md:text-4xl font-bold mb-2">Events</h1>
+                    <p className="text-muted-foreground text-base md:text-lg">Stay updated with all upcoming and past events</p>
+                </div>
+                
+                <div className="flex justify-end mb-6">
+                    {(superUser === "admin" || superUser === "superadmin") && (
+                        <motion.div 
+                            whileHover={{ scale: 1.02 }} 
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            <CreateEmail />
+                        </motion.div>
+                    )}
+                </div>
+                
                 <EmailList />
-            </div>
-        </Layout>}
-        </>
+            </motion.div>
+        </Layout>
     );
 }
