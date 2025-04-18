@@ -1,10 +1,12 @@
-import Layout from "@/components/layout.tsx";
-import EmailList from "@/components/email-list";
-import CreateEmail from "@/components/create-email-dialog";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Loader2 } from "lucide-react";
+import { Loader2, } from "lucide-react";
 import { motion } from "framer-motion";
+import EmailList from "@/components/email-list";
+import CreateEmail from "@/components/create-email-dialog";
+import { ThemeProvider } from "@/components/theme-provider";
+import CustomSidebar from '@/components/CustomSidebar';
+import CustomHeader from '@/components/CustomHeader';
 
 export default function EventsPage() {
     const [superUser, setSuperUser] = useState("");
@@ -37,41 +39,66 @@ export default function EventsPage() {
 
     if (state === "loading") {
         return (
-            <Layout>
-                <div className="h-screen flex items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <span className="ml-2 text-lg">Loading events...</span>
+            <ThemeProvider>
+                <div className="flex h-screen w-full overflow-hidden">
+                    {/* Custom Sidebar */}
+                    <CustomSidebar />
+
+                    {/* Main Content Area */}
+                    <div className="flex-1 overflow-hidden">
+                        {/* Custom Header */}
+                        <CustomHeader title="Events" />
+
+                        {/* Loading State */}
+                        <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                        </div>
+                    </div>
                 </div>
-            </Layout>
+            </ThemeProvider>
         );
     }
 
     return (
-        <Layout>
-            <motion.div 
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }} 
-                transition={{ duration: 0.5 }}
-                className="container mx-auto px-4 md:px-8 py-8 max-w-full lg:max-w-[90%] 2xl:max-w-[80%]"
-            >
-                <div className="mb-8">
-                    <h1 className="text-3xl md:text-4xl font-bold mb-2">Events</h1>
-                    <p className="text-muted-foreground text-base md:text-lg">Stay updated with all upcoming and past events</p>
-                </div>
-                
-                <div className="flex justify-end mb-6">
-                    {(superUser === "admin" || superUser === "superadmin") && (
+        <ThemeProvider>
+            <div className="flex h-screen w-full overflow-hidden">
+                {/* Custom Sidebar */}
+                <CustomSidebar />
+
+                {/* Main Content Area */}
+                <div className="flex-1 overflow-hidden">
+                    {/* Custom Header */}
+                    <CustomHeader title="Events" />
+
+                    {/* Main Content with Scrolling */}
+                    <main className="flex-1 w-full h-[calc(100vh-4rem)] overflow-y-auto">
                         <motion.div 
-                            whileHover={{ scale: 1.02 }} 
-                            whileTap={{ scale: 0.98 }}
+                            initial={{ opacity: 0 }} 
+                            animate={{ opacity: 1 }} 
+                            transition={{ duration: 0.5 }}
+                            className="container mx-auto py-6 px-4 md:px-6 lg:px-8"
                         >
-                            <CreateEmail />
+                            <div className="mb-6 flex justify-between items-center">
+                                <h1 className="text-3xl font-bold tracking-tight">Events</h1>
+                                
+                                <div className="flex space-x-3">
+                                    {/* Only show one CreateEmail component since it's actually for creating events */}
+                                    <motion.div
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.98 }}
+                                    >
+                                        <CreateEmail />
+                                    </motion.div>
+                                </div>
+                            </div>
+                            
+                            <div className="bg-card/20 backdrop-blur-sm rounded-xl shadow-sm border p-4 md:p-6 mb-2">
+                                <EmailList />
+                            </div>
                         </motion.div>
-                    )}
+                    </main>
                 </div>
-                
-                <EmailList />
-            </motion.div>
-        </Layout>
+            </div>
+        </ThemeProvider>
     );
 }

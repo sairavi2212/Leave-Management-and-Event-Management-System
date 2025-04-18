@@ -14,7 +14,6 @@ import {
 
 import NavUser from "@/components/nav-user";
 import { useState , useEffect} from "react";
-import e from "express";
 
 interface User {
   name: string;
@@ -72,9 +71,9 @@ export function AppSidebar() {
 
 
   if((userData.role === "admin" || userData.role === "superadmin") ) {
-    if(!items.some(e => e.title === "User Requests")){
+    if(!items.some(e => e.title === "Leave Requests")){
       items.push({
-        title: "User Requests",
+        title: "Leave Requests",
         url: "admin",
         icon: Home,
       })
@@ -93,20 +92,20 @@ export function AppSidebar() {
 
   if(userData.role === "admin" || userData.role === "user") {
     // add myleaves and leave request
-    if(!items.some(e => e.title === "Leave Request")){
+    if(!items.some(e => e.title === "Leave Management")){
       items.push({
-        title: "Leave Request",
+        title: "Leave Management",
         url: "leaves",
         icon: Home,
       })
     }
-    if(!items.some(e => e.title === "My Leaves")){
-      items.push({
-        title: "My Leaves",
-        url: "myleaves",
-        icon: Home,
-      })
-    }
+    // if(!items.some(e => e.title === "My Leaves")){
+    //   items.push({
+    //     title: "My Leaves",
+    //     url: "myleaves",
+    //     icon: Home,
+    //   })
+    // }
   }
   
   return (
