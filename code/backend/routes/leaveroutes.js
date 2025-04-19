@@ -26,45 +26,95 @@ leaverouter.post("/", auth, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Calculate the duration of the leave request in days
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const durationInDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+    // Determine if the leave should be auto-approved (2 days or less)
+    const isShortLeave = durationInDays <= 2;
+    const leaveStatus = isShortLeave ? "approved" : "pending";
+
     // Create new leave request
     const leave = new Leave({
       userId: req.user.userId,
       leaveType,
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: start,
+      endDate: end,
       reason,
-      status: "pending",
+      status: leaveStatus,
       submittedAt: new Date(),
+      // If auto-approved, set additional fields
+      ...(isShortLeave && {
+        approvedAt: new Date(),
+        comments: "Auto-approved as duration is 2 days or less"
+      })
     });
 
     await leave.save();
 
     // Send email to the parent of the user
     if (user.parent_role && user.parent_role.length > 0) {
-      for (const parentRole of user.parent_role) {
-        const parentEmail = parentRole; // Assuming the first parent role contains the email
+      for (const parentEmail of user.parent_role) {
         const mailOptions = {
           from: "foundationeklavya1@gmail.com",
           to: parentEmail,
-          subject: `Leave Request Submitted by ${user.name}`,
-          html: `
-            <h1>Leave Request Notification</h1>
-            <p>Hello,</p>
-            <p>${user.name} has submitted a leave request with the following details:</p>
-            <p><strong>Leave Type:</strong> ${leaveType}</p>
-            <p><strong>Start Date:</strong> ${startDate}</p>
-            <p><strong>End Date:</strong> ${endDate}</p>
-            <p><strong>Reason:</strong> ${reason}</p>
-            <p>Please log in to the system to review and take action on this request.</p>
-            <p>Best regards,<br>Eklavya Foundation Team</p>
-          `,
+          subject: isShortLeave 
+            ? `Notification: ${user.name} is on Leave (Auto-Approved)` 
+            : `Leave Request Submitted by ${user.name}`,
+          html: isShortLeave 
+            ? `
+              <h1>Leave Notification</h1>
+              <p>Hello,</p>
+              <p>${user.name} is on leave with the following details:</p>
+              <p><strong>Leave Type:</strong> ${leaveType}</p>
+              <p><strong>Start Date:</strong> ${startDate}</p>
+              <p><strong>End Date:</strong> ${endDate}</p>
+              <p><strong>Reason:</strong> ${reason}</p>
+              <p><strong>Status:</strong> Automatically approved (duration ≤ 2 days)</p>
+              <p>This is an auto-approved leave as per the policy for leaves of 2 days or less.</p>
+              <p>Best regards,<br>Eklavya Foundation Team</p>
+            `
+            : `
+              <h1>Leave Request Notification</h1>
+              <p>Hello,</p>
+              <p>${user.name} has submitted a leave request with the following details:</p>
+              <p><strong>Leave Type:</strong> ${leaveType}</p>
+              <p><strong>Start Date:</strong> ${startDate}</p>
+              <p><strong>End Date:</strong> ${endDate}</p>
+              <p><strong>Reason:</strong> ${reason}</p>
+              <p>Please log in to the system to review and take action on this request.</p>
+              <p>Best regards,<br>Eklavya Foundation Team</p>
+            `,
         };
         await transporter.sendMail(mailOptions);
       }
     }
 
+    // If auto-approved, also send a confirmation email to the user
+    if (isShortLeave) {
+      const userMailOptions = {
+        from: "foundationeklavya1@gmail.com",
+        to: user.email,
+        subject: "Your Leave Request has been Auto-Approved",
+        html: `
+          <h1>Leave Request Auto-Approved</h1>
+          <p>Hello ${user.name},</p>
+          <p>Your leave request has been <strong>automatically approved</strong> as it is for 2 days or less.</p>
+          <p><strong>Leave Type:</strong> ${leaveType}</p>
+          <p><strong>Start Date:</strong> ${startDate}</p>
+          <p><strong>End Date:</strong> ${endDate}</p>
+          <p><strong>Reason:</strong> ${reason}</p>
+          <p>Best regards,<br>Eklavya Foundation Team</p>
+        `,
+      };
+      await transporter.sendMail(userMailOptions);
+    }
+
     res.status(201).json({
-      message: "Leave request submitted successfully",
+      message: isShortLeave 
+        ? "Leave request automatically approved (duration ≤ 2 days)" 
+        : "Leave request submitted successfully",
       leave,
     });
   } catch (error) {
