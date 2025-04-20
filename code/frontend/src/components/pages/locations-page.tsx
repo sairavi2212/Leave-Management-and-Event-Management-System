@@ -78,7 +78,7 @@ export default function LocationsPage() {
   // Once we know the role, either load data or redirect away
   useEffect(() => {
     if (state === "loaded") {
-      if (userRole === "superadmin" || userRole === "admin") {
+      if (userRole === "superadmin") {
         fetchLocations();
       } else {
         // Not a superadmin? Send them home

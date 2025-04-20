@@ -145,7 +145,7 @@ const CustomSidebar: React.FC = () => {
       }
     }
 
-    if (userData.role === "superadmin" || userData.role === "admin") {
+    if (userData.role === "superadmin" ) {
       if (!items.some(e => e.title === "Location")) {
         items.push({
           title: "Location",

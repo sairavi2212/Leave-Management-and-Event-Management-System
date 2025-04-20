@@ -171,7 +171,7 @@ export default function Email({
                                                 </div>
                                                 
                                                 {/* Projects section */}
-                                                {Projects && Projects.length > 0 && (
+                                                {/* {Projects && Projects.length > 0 && (
                                                     <div className="mt-6 p-4 rounded-lg border bg-muted/30">
                                                         <h4 className="text-sm font-medium mb-3 flex items-center">
                                                             <FolderIcon className="h-4 w-4 mr-2 text-primary" />
@@ -185,7 +185,7 @@ export default function Email({
                                                             ))}
                                                         </div>
                                                     </div>
-                                                )}
+                                                )} */}
                                                 
                                                 {/* Image section */}
                                                 {Image && !imageError ? (
