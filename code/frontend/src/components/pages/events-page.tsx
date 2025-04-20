@@ -92,7 +92,7 @@ export default function EventsPage() {
                                 </div>
                             </div>
                             
-                            <div className="bg-card/20 backdrop-blur-sm rounded-xl shadow-sm border p-4 md:p-6 mb-2">
+                            <div className="bg-card/10 backdrop-blur-sm rounded-xl shadow-sm !border-none border-0 p-4 md:p-6 mb-2">
                                 <EmailList />
                             </div>
                         </motion.div>

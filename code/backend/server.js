@@ -10,6 +10,7 @@ import leaverouter from './routes/leaveroutes.js';
 import connectDB from './utils/db.js';
 import { fileURLToPath } from 'url'; // Add this import
 import path from 'path'; // Make sure path is imported
+import fs from 'fs'; // Import fs module
 
 
 dotenv.config();
@@ -24,6 +25,15 @@ connectDB();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Set up uploads directory
+const uploadsDir = path.join(__dirname, 'uploads');
+
+// Create uploads directory if it doesn't exist
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Make uploads directory accessible
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // MongoDB Connection

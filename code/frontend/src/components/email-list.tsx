@@ -36,7 +36,9 @@ export default function EmailList() {
             return;
         }
 
-        axios.get("http://localhost:5000/api/events", {
+        const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        
+        axios.get(`${apiBaseUrl}/api/events`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -95,7 +97,7 @@ export default function EmailList() {
 
     return (
         <div className="w-full mx-auto">
-            <div className="bg-card rounded-lg shadow-sm p-4 md:p-6 mb-6">
+                <div className="bg-card/30 backdrop-blur-sm rounded-lg shadow-sm p-4 md:p-6 mb-6 border-0 !border-none">
                 <div className="flex flex-col sm:flex-row gap-4 mb-2">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -118,7 +120,7 @@ export default function EmailList() {
                 </div>
             </div>
 
-            <ScrollArea className="h-[65vh] md:h-[70vh] rounded-md border">
+            <ScrollArea className="h-[65vh] md:h-[70vh] rounded-md !border-none border-0 bg-background/30">
                 <motion.div 
                     className="py-4 px-4 md:px-6 space-y-4 md:space-y-6"
                     variants={container}
@@ -138,13 +140,14 @@ export default function EmailList() {
                                         Title={event.title}
                                         Email={event.title}
                                         Description={event.description}
-                                        Image={event.image_path ? `http://localhost:5000${event.image_path}` : ""}
+                                        Image={event.image_path || ""}
                                         CreatedAt={event.createdAt}
                                         StartDate={event.start}
                                         EndDate={event.end}
                                         Category={event.selected_dropdown}
                                         Locations={event.locations}
                                         Projects={event.projects}
+                                        eventId={event._id}
                                     />
                                 </motion.div>
                             ))}

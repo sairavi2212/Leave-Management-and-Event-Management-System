@@ -5,7 +5,6 @@ import express from 'express';
 import ResetToken from '../models/resettoken.js';
 const passwordrouter = express.Router();
 import transporter from '../utils/email.js'; // Import the transporter
-import auth from '../middleware/auth.js';
   
   // Request password reset (send email)
   passwordrouter.post('/request', async (req, res) => {
