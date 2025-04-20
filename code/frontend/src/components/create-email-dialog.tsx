@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Dialog,
     DialogContent,
@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
-var Branches = ["Hoshangabad", "Lucknow", "Asgard", "TVA", "Arkham City", "Location1","Bhopal"];
+// Removed hardcoded Branches array
 var Teams = ["Tech Team", "Marketing Team", "Sales Team", "HR Team", "Finance Team"];
 
 interface Comment {
@@ -52,6 +52,11 @@ interface Event {
     projects: string[];
 }
 
+interface Location {
+    _id: string;
+    city: string;
+}
+
 export default function CreateEmail() {
     const [open, setOpen] = useState(false);
     const [selectedBranch, setSelectedBranch] = useState("");
@@ -64,6 +69,33 @@ export default function CreateEmail() {
     const [end, setEnd] = useState<Date | undefined>(undefined);
     const [locations, setLocations] = useState<string[]>([]);
     const [projects, setProjects] = useState<string[]>([]);
+    const [branchesLoading, setBranchesLoading] = useState(true);
+    const [branches, setBranches] = useState<Location[]>([]);
+
+    // Fetch locations from API
+    useEffect(() => {
+        const fetchLocations = async () => {
+            setBranchesLoading(true);
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.get('http://localhost:5000/api/locations', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                setBranches(response.data);
+            } catch (error) {
+                console.error('Failed to fetch locations:', error);
+                toast.error("Error fetching locations", {
+                    description: "Could not load branch locations"
+                });
+            } finally {
+                setBranchesLoading(false);
+            }
+        };
+
+        fetchLocations();
+    }, []);
 
     // Handle branch selection
     const handleBranchChange = (branch: string) => {
@@ -196,12 +228,19 @@ export default function CreateEmail() {
                                 <CardDescription>Select Branch</CardDescription>
                                 <Select value={selectedBranch} onValueChange={handleBranchChange}>
                                     <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Select branch" />
+                                        {branchesLoading ? (
+                                            <span className="flex items-center">
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                Loading...
+                                            </span>
+                                        ) : (
+                                            <SelectValue placeholder="Select branch" />
+                                        )}
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {Branches.map(branch => (
-                                            <SelectItem key={branch} value={branch}>
-                                                {branch}
+                                        {branches.map(branch => (
+                                            <SelectItem key={branch._id} value={branch.city}>
+                                                {branch.city}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>

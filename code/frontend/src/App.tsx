@@ -10,6 +10,7 @@ import LeaveReport from "./components/pages/leave_report";
 import ResetPasswordPage from "./components/pages/passwordreset";
 import RegisterUser from "./components/pages/RegisterUser";
 import ProjectsPage from "@/components/pages/projects-page";
+import LocationsPage from "@/components/pages/locations-page";
 
 function App() {
     return (
@@ -29,6 +30,7 @@ function App() {
                     {/* <Route path="/first-time-login" element={<FirstTimeLogin/>} /> */}
                     <Route path="/register-user" element={<RegisterUser />} />
                     <Route path="/projects" element={<ProjectsPage />} />
+                    <Route path="/locations" element={<LocationsPage />} />
                 </Routes>
             </Router>
         </>

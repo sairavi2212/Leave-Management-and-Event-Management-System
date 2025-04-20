@@ -15,6 +15,7 @@ import {
   UserCircle,
   Sun,
   Moon,
+  MapPin,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTheme } from "@/components/theme-provider";
@@ -140,6 +141,16 @@ const CustomSidebar: React.FC = () => {
           title: "Register User",
           url: "/register-user",
           icon: UserPlus,
+        });
+      }
+    }
+
+    if (userData.role === "superadmin" || userData.role === "admin") {
+      if (!items.some(e => e.title === "Location")) {
+        items.push({
+          title: "Location",
+          url: "/locations",
+          icon: MapPin,
         });
       }
     }
