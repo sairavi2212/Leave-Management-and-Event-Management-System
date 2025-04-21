@@ -201,7 +201,7 @@ const CustomSidebar: React.FC = () => {
           title: "Leave Management",
           url: "/leaves",
           icon: Calendar,
-          badge: userData.role === "user" ? unreadNotifications : undefined // Show notification badge for users
+          badge: userData.role === "user" && unreadNotifications > 0 ? unreadNotifications : undefined // Only show notifications badge for users when count > 0
         });
       }
     }
