@@ -11,6 +11,8 @@ import ResetPasswordPage from "./components/pages/passwordreset";
 import RegisterUser from "./components/pages/RegisterUser";
 import ProjectsPage from "@/components/pages/projects-page";
 import LocationsPage from "@/components/pages/locations-page";
+import FlowchartPage from "@/components/pages/FlowchartPage";
+import EventsFlowchartPage from "@/components/pages/EventsFlowchartPage";
 
 function App() {
     return (
@@ -31,6 +33,8 @@ function App() {
                     <Route path="/register-user" element={<RegisterUser />} />
                     <Route path="/projects" element={<ProjectsPage />} />
                     <Route path="/locations" element={<LocationsPage />} />
+                    {/* <Route path="/leave-flowchart" element={<FlowchartPage />} />
+                    <Route path="/events-flowchart" element={<EventsFlowchartPage />} /> */}
                 </Routes>
             </Router>
         </>

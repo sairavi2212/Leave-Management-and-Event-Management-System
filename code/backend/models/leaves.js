@@ -46,6 +46,10 @@ const leaveSchema = new mongoose.Schema({
   },
   approved_comments: {
     type: String
+  },
+  isNotificationRead: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 

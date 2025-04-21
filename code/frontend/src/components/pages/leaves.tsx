@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { format } from 'date-fns';
-import { CalendarIcon, CheckCircle2, LoaderCircle, AlertCircle, Info, XCircle, Check, Clock, RefreshCcw, Filter, Eye } from 'lucide-react';
+import { format, formatRelative, startOfDay, subDays } from 'date-fns';
+import { CalendarIcon, CheckCircle2, LoaderCircle, AlertCircle, Info, XCircle, Check, Clock, RefreshCcw, Filter, Eye, Bell, X, InboxIcon, BadgeCheck, AlertOctagon } from 'lucide-react';
 import { toast, Toaster } from "sonner";
 import { DatePicker } from "@/components/date-picker"; 
 import { ThemeProvider } from "@/components/theme-provider";
@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -60,6 +60,15 @@ interface Leave {
   approvedAt?: string;
 }
 
+// Interface for leave notifications
+interface LeaveNotification {
+  _id: string;
+  leaveType: string;
+  status: 'approved' | 'rejected';
+  approvedAt: string;
+  read: boolean;
+}
+
 // Leave allocation per month
 const LEAVES_PER_MONTH = {
     sick: 12,
@@ -82,6 +91,176 @@ const formSchema = z.object({
     message: "End date cannot be before start date",
     path: ["endDate"],
 });
+
+// Notification component to display recent approvals/rejections
+const LeaveNotifications = ({ notifications, onClose, onMarkAsRead }: { 
+  notifications: LeaveNotification[], 
+  onClose: () => void,
+  onMarkAsRead: (ids: string[]) => void
+}) => {
+    const stopPropagation = (e: React.MouseEvent) => {
+        // Prevent clicks inside the card from closing the dropdown
+        e.stopPropagation();
+    };
+
+    // Group notifications by date (today, yesterday, older)
+    const groupedNotifications = useMemo(() => {
+        const today = startOfDay(new Date()).getTime();
+        const yesterday = startOfDay(subDays(new Date(), 1)).getTime();
+        
+        const groups: {[key: string]: LeaveNotification[]} = {
+            today: [],
+            yesterday: [],
+            older: []
+        };
+        
+        notifications.forEach(notification => {
+            const notifDate = startOfDay(new Date(notification.approvedAt)).getTime();
+            
+            if (notifDate === today) {
+                groups.today.push(notification);
+            } else if (notifDate === yesterday) {
+                groups.yesterday.push(notification);
+            } else {
+                groups.older.push(notification);
+            }
+        });
+        
+        return groups;
+    }, [notifications]);
+    
+    // Get unread notifications
+    const unreadNotifications = useMemo(() => 
+        notifications.filter(n => !n.read), 
+    [notifications]);
+
+    return (
+        <Card className="shadow-lg w-80 max-h-[500px] overflow-hidden" onClick={stopPropagation}>
+            <CardHeader className="pb-2 pt-3 border-b">
+                <div className="flex justify-between items-center">
+                    <CardTitle className="text-base flex items-center">
+                        <Bell className="h-4 w-4 mr-2" />
+                        Notifications
+                        {unreadNotifications.length > 0 && (
+                            <Badge className="ml-2 bg-red-500 hover:bg-red-600 text-xs">
+                                {unreadNotifications.length} new
+                            </Badge>
+                        )}
+                    </CardTitle>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full" onClick={onClose}>
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+            </CardHeader>
+            
+            {notifications.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 px-4">
+                    <div className="rounded-full bg-muted p-3 mb-3">
+                        <InboxIcon className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground text-center">
+                        No notifications yet. You'll see updates about your leave requests here.
+                    </p>
+                </div>
+            ) : (
+                <>
+                    <ScrollArea className="max-h-[350px]">
+                        <div className="px-4 py-2">
+                            {/* Today's notifications */}
+                            {groupedNotifications.today.length > 0 && (
+                                <div className="mb-3">
+                                    <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2 px-1">
+                                        Today
+                                    </div>
+                                    <div className="space-y-2">
+                                        {groupedNotifications.today.map(notification => (
+                                            <NotificationItem key={notification._id} notification={notification} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Yesterday's notifications */}
+                            {groupedNotifications.yesterday.length > 0 && (
+                                <div className="mb-3">
+                                    <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2 px-1">
+                                        Yesterday
+                                    </div>
+                                    <div className="space-y-2">
+                                        {groupedNotifications.yesterday.map(notification => (
+                                            <NotificationItem key={notification._id} notification={notification} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Older notifications */}
+                            {groupedNotifications.older.length > 0 && (
+                                <div className="mb-2">
+                                    <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2 px-1">
+                                        Earlier
+                                    </div>
+                                    <div className="space-y-2">
+                                        {groupedNotifications.older.map(notification => (
+                                            <NotificationItem key={notification._id} notification={notification} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </ScrollArea>
+                    
+                    <CardFooter className="flex justify-between py-2 px-4 border-t">
+                        {unreadNotifications.length > 0 && (
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-xs mr-2 flex-1"
+                                onClick={() => onMarkAsRead(unreadNotifications.map(n => n._id))}
+                            >
+                                <Check className="h-3 w-3 mr-1" /> Mark all as read
+                            </Button>
+                        )}
+                        <Button variant="ghost" size="sm" className="text-xs flex-1" onClick={onClose}>
+                            Close
+                        </Button>
+                    </CardFooter>
+                </>
+            )}
+        </Card>
+    );
+};
+
+// Individual notification item component
+const NotificationItem = ({ notification }: { notification: LeaveNotification }) => {
+    const isApproved = notification.status === 'approved';
+    
+    return (
+        <div className={`p-3 rounded-lg border ${notification.read ? 'bg-background' : 'bg-muted/20'} text-sm relative transition-all duration-200`}>
+            {!notification.read && (
+                <div className="absolute right-2 top-2 h-2 w-2 bg-blue-500 rounded-full" />
+            )}
+            <div className="flex items-center gap-2 mb-1.5">
+                <div className="rounded-full p-1">
+                    {isApproved ? (
+                        <BadgeCheck className="h-4 w-4 text-green-500" />
+                    ) : (
+                        <AlertOctagon className="h-4 w-4 text-red-500" />
+                    )}
+                </div>
+                <div className="flex-1 font-medium">
+                    {isApproved ? 'Leave Approved' : 'Leave Rejected'}
+                </div>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {formatRelative(new Date(notification.approvedAt), new Date())}
+                </span>
+            </div>
+            <p className="ml-6">
+                Your <span className="capitalize font-medium">{notification.leaveType}</span> leave has been <span className={`font-medium ${isApproved ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{notification.status}</span>.
+            </p>
+        </div>
+    );
+};
 
 const Leaves: React.FC = () => {
     // States
@@ -108,6 +287,12 @@ const Leaves: React.FC = () => {
     const [detailsOpen, setDetailsOpen] = useState(false);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [leaveToDelete, setLeaveToDelete] = useState<string | null>(null);
+    
+    // For notifications
+    const [notifications, setNotifications] = useState<LeaveNotification[]>([]);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [hasNewNotifications, setHasNewNotifications] = useState(false);
+    const [notificationCount, setNotificationCount] = useState(0);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -115,6 +300,39 @@ const Leaves: React.FC = () => {
             reason: "",
         },
     });
+
+    // Mark notifications as read in the backend
+    const markNotificationsAsRead = async (notificationIds: string[]) => {
+        if (notificationIds.length === 0) return;
+        
+        try {
+            const response = await fetch('http://localhost:5000/api/leaves/notifications/mark-read', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ notificationIds })
+            });
+            
+            if (response.ok) {
+                // Update local state to mark notifications as read
+                setNotifications(prevNotifications => 
+                    prevNotifications.filter(notification => !notificationIds.includes(notification._id))
+                );
+                
+                // Update notification count
+                setNotificationCount(prev => Math.max(0, prev - notificationIds.length));
+                
+                // If we've marked all notifications as read, remove the indicator
+                if (notificationCount - notificationIds.length <= 0) {
+                    setHasNewNotifications(false);
+                }
+            }
+        } catch (error) {
+            console.error('Error marking notifications as read:', error);
+        }
+    };
 
     // Fetch leave balance
     useEffect(() => {
@@ -146,6 +364,54 @@ const Leaves: React.FC = () => {
             fetchLeaves();
         }
     }, [activeTab, submitted]);
+    
+    // Fetch notifications
+    useEffect(() => {
+        const fetchNotifications = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/leaves/notifications', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    setNotifications(data);
+                    setNotificationCount(data.length);
+                    
+                    // Check if there are new notifications
+                    if (data.length > 0) {
+                        const lastCheckedTime = localStorage.getItem('lastNotificationCheck');
+                        const mostRecentNotification = new Date(data[0].approvedAt).getTime();
+                        
+                        if (!lastCheckedTime || mostRecentNotification > parseInt(lastCheckedTime)) {
+                            setHasNewNotifications(true);
+                        }
+                        
+                        // If notifications are shown automatically, mark as seen
+                        if (data.length > 0 && !lastCheckedTime) {
+                            setShowNotifications(true);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching notifications:", error);
+            }
+        };
+        
+        fetchNotifications();
+        
+        // Set up interval to check for new notifications every 10 seconds (was 60 seconds before)
+        const intervalId = setInterval(fetchNotifications, 10000);
+        return () => clearInterval(intervalId);
+    }, []);
+    
+    // Mark notifications as read when viewed
+    const handleNotificationsViewed = () => {
+        localStorage.setItem('lastNotificationCheck', Date.now().toString());
+        setHasNewNotifications(false);
+    };
 
     const fetchLeaves = async () => {
         setLoadingHistory(true);
@@ -313,6 +579,7 @@ const Leaves: React.FC = () => {
                 ...values,
                 startDate: format(values.startDate, "yyyy-MM-dd"),
                 endDate: format(values.endDate, "yyyy-MM-dd"),
+                reason: values.reason,
                 status: "pending",
                 submittedAt: new Date().toISOString(),
             };
@@ -383,7 +650,39 @@ const Leaves: React.FC = () => {
                         <main className="flex-1 w-full overflow-y-auto">
                             <div className="flex justify-center w-full py-6">
                                 <div className="w-full max-w-5xl px-4">
-                                    {/* <h1 className="text-3xl font-bold tracking-tight mb-8 text-center">Leave Management</h1> */}
+                                    {/* Notifications bell icon */}
+                                    <div className="flex justify-end mb-2">
+                                        <div className="relative">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="rounded-full p-2"
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Prevent click from propagating
+                                                    setShowNotifications(true); // Always show notifications when clicked
+                                                    handleNotificationsViewed();
+                                                }}
+                                            >
+                                                <Bell className="h-5 w-5" />
+                                                {hasNewNotifications && notificationCount > 0 && (
+                                                    <span className="absolute top-0 right-0 h-5 w-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
+                                                        {notificationCount > 9 ? '9+' : notificationCount}
+                                                    </span>
+                                                )}
+                                            </Button>
+                                            
+                                            {/* Notifications dropdown */}
+                                            {showNotifications && (
+                                                <div className="absolute right-0 z-50 mt-1">
+                                                    <LeaveNotifications 
+                                                        notifications={notifications} 
+                                                        onClose={() => setShowNotifications(false)} 
+                                                        onMarkAsRead={markNotificationsAsRead}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                     
                                     <Tabs defaultValue="apply" className="w-full" value={activeTab} onValueChange={setActiveTab}>
                                         <div className="mb-8">

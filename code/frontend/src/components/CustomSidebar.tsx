@@ -18,6 +18,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/components/theme-provider";
 
 interface User {
@@ -30,6 +31,7 @@ interface MenuItem {
   title: string;
   url: string;
   icon: React.ElementType;
+  badge?: number;
 }
 
 const CustomSidebar: React.FC = () => {
@@ -42,6 +44,8 @@ const CustomSidebar: React.FC = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userData, setUserData] = useState<User>({ name: "", email: "", role: "" });
+  const [pendingLeaveCount, setPendingLeaveCount] = useState<number>(0);
+  const [unreadNotifications, setUnreadNotifications] = useState<number>(0);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([
     {
       title: "Home",
@@ -121,18 +125,94 @@ const CustomSidebar: React.FC = () => {
     fetchUserData();
   }, []);
 
-  // Update menu items based on user role
+  // Fetch pending leave count for admin/superadmin
   useEffect(() => {
-    const items = [...menuItems];
+    const fetchPendingLeaveCount = async () => {
+      if (userData.role !== 'admin' && userData.role !== 'superadmin') return;
+      
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      try {
+        const response = await fetch('http://localhost:5000/api/leaves/pending-count', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setPendingLeaveCount(data.pendingCount);
+        }
+      } catch (error) {
+        console.error('Error fetching pending leave count:', error);
+      }
+    };
+    
+    if (userData.role) {
+      fetchPendingLeaveCount();
+      
+      // Set up interval to refresh the count every 10 seconds instead of every minute
+      const intervalId = setInterval(fetchPendingLeaveCount, 10000);
+      return () => clearInterval(intervalId);
+    }
+  }, [userData.role]);
 
-    if (userData.role === "admin" || userData.role === "superadmin") {
-      if (!items.some(e => e.title === "Leave Requests")) {
+  // Fetch unread notifications for user
+  useEffect(() => {
+    const fetchUnreadNotifications = async () => {
+      if (userData.role !== 'user') return;
+      
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      try {
+        const response = await fetch('http://localhost:5000/api/notifications/unread-count', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setUnreadNotifications(data.unreadCount);
+        }
+      } catch (error) {
+        console.error('Error fetching unread notifications:', error);
+      }
+    };
+    
+    if (userData.role) {
+      fetchUnreadNotifications();
+      
+      // Set up interval to refresh the count every 10 seconds
+      const intervalId = setInterval(fetchUnreadNotifications, 10000);
+      return () => clearInterval(intervalId);
+    }
+  }, [userData.role]);
+
+  // Update menu items based on user role and pending leave count
+  useEffect(() => {
+    const items = [...menuItems.filter(item => item.title !== "Leave Management" && item.title !== "Leave Requests")];
+
+    if (userData.role === "admin" || userData.role === "user") {
+      if (!items.some(e => e.title === "Leave Management")) {
         items.push({
-          title: "Leave Requests",
-          url: "/admin",
-          icon: FileCheck,
+          title: "Leave Management",
+          url: "/leaves",
+          icon: Calendar,
+          badge: userData.role === "user" ? unreadNotifications : undefined // Show notification badge for users
         });
       }
+    }
+    
+    if (userData.role === "admin" || userData.role === "superadmin") {
+      items.push({
+        title: "Leave Requests",
+        url: "/admin",
+        icon: FileCheck,
+        badge: pendingLeaveCount > 0 ? pendingLeaveCount : undefined // Only set badge if count > 0
+      });
     }
 
     if (userData.role === "superadmin") {
@@ -155,18 +235,8 @@ const CustomSidebar: React.FC = () => {
       }
     }
 
-    if (userData.role === "admin" || userData.role === "user") {
-      if (!items.some(e => e.title === "Leave Management")) {
-        items.push({
-          title: "Leave Management",
-          url: "/leaves",
-          icon: Calendar,
-        });
-      }
-    }
-
     setMenuItems(items);
-  }, [userData.role]);
+  }, [userData.role, pendingLeaveCount, unreadNotifications]);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -284,7 +354,7 @@ const CustomSidebar: React.FC = () => {
                       <button
                         key={item.title}
                         onClick={() => navigate(item.url)}
-                        className={`group w-full flex items-center rounded-lg px-3 py-2.5 text-sm transition-all
+                        className={`group w-full flex items-center rounded-lg px-3 py-2.5 text-sm transition-all relative
                                   ${isActiveItem 
                                     ? "bg-gradient-to-r from-blue-600/20 to-indigo-600/20 text-blue-400 font-medium border-l-2 border-blue-500" 
                                     : "text-slate-300 hover:bg-slate-800"}`}
@@ -294,6 +364,18 @@ const CustomSidebar: React.FC = () => {
                         {/* Always show title text on mobile, respect collapsed state on desktop */}
                         {(!isCollapsed || isMobile) && (
                           <span className="ml-3 transition-opacity">{item.title}</span>
+                        )}
+                        
+                        {/* Notification Badge - Only show when count is greater than 0 */}
+                        {item.badge && item.badge > 0 && (
+                          <Badge 
+                            className={`
+                              ml-2 bg-red-500 hover:bg-red-600 absolute
+                              ${isCollapsed && !isMobile ? 'right-0 top-0' : 'right-2 top-2'}
+                            `}
+                          >
+                            {item.badge > 99 ? '99+' : item.badge}
+                          </Badge>
                         )}
                       </button>
                     );

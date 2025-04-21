@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { format } from "date-fns";
 import { ThemeProvider } from "@/components/theme-provider";
 import CustomSidebar from "@/components/CustomSidebar";
@@ -107,6 +107,8 @@ const AdminLeaves: React.FC = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+  const intervalRef = useRef<number | null>(null);
 
   const commentForm = useForm<z.infer<typeof commentSchema>>({
     resolver: zodResolver(commentSchema),
@@ -117,10 +119,26 @@ const AdminLeaves: React.FC = () => {
 
   useEffect(() => {
     fetchLeaves();
+    
+    // Set up the interval for auto-refresh
+    intervalRef.current = window.setInterval(() => {
+      fetchLeaves(true);
+      setLastRefreshed(new Date());
+    }, 10000); // 10 seconds
+    
+    // Clean up the interval on component unmount
+    return () => {
+      if (intervalRef.current) {
+        window.clearInterval(intervalRef.current);
+      }
+    };
   }, [statusFilter]);
 
-  const fetchLeaves = async () => {
-    setLoading(true);
+  const fetchLeaves = async (isAutoRefresh = false) => {
+    // Only show loading indicator for manual refreshes, not auto-refreshes
+    if (!isAutoRefresh) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
@@ -150,7 +168,9 @@ const AdminLeaves: React.FC = () => {
           : "Failed to fetch leave requests",
       );
     } finally {
-      setLoading(false);
+      if (!isAutoRefresh) {
+        setLoading(false);
+      }
     }
   };
 
@@ -328,6 +348,9 @@ const AdminLeaves: React.FC = () => {
                       </CardTitle>
                       <CardDescription className="text-base mt-1">
                         Review and manage employee leave requests
+                        {/* <div className="text-xs text-muted-foreground mt-1">
+                          Last refreshed: {format(lastRefreshed, "hh:mm:ss a")}
+                        </div> */}
                       </CardDescription>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3">
@@ -354,7 +377,7 @@ const AdminLeaves: React.FC = () => {
                         </Select>
                       </div>
                       <Button
-                        onClick={fetchLeaves}
+                        onClick={() => fetchLeaves()}
                         variant="outline"
                         className="h-10"
                       >
