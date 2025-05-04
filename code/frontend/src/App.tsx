@@ -5,14 +5,12 @@ import HomePage from "@/components/pages/home-page";
 import ProfilePage from "@/components/pages/profile-page";
 import LandingPage from "./components/pages/landing-page";
 import Leaves from "./components/pages/leaves";
-import MyLeaves from "./components/pages/myleaves";
 import AdminLeaves from "./components/pages/admin";
-import HierarchyTree from "./components/pages/hierarchy";
 import LeaveReport from "./components/pages/leave_report";
 import ResetPasswordPage from "./components/pages/passwordreset";
 import RegisterUser from "./components/pages/RegisterUser";
-import FirstTimeLogin from "./components/pages/FirstTimeLogin";
 import ProjectsPage from "@/components/pages/projects-page";
+import LocationsPage from "@/components/pages/locations-page";
 
 function App() {
     return (
@@ -25,14 +23,12 @@ function App() {
                     <Route path="/home" element={<HomePage />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/leaves" element={<Leaves />} />
-                    <Route path="/myleaves" element={<MyLeaves />} />
                     <Route path="/admin" element={<AdminLeaves />} />
-                    <Route path="/hierarchy" element={<HierarchyTree />} />
                     <Route path="/leave-report" element={<LeaveReport />} />
                     <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-                    <Route path="/first-time-login" element={<FirstTimeLogin/>} />
                     <Route path="/register-user" element={<RegisterUser />} />
                     <Route path="/projects" element={<ProjectsPage />} />
+                    <Route path="/locations" element={<LocationsPage />} />
                 </Routes>
             </Router>
         </>

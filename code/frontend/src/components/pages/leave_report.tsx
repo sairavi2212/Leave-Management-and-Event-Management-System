@@ -1,13 +1,15 @@
-import { useState, useEffect } from 'react';
-import Layout from "@/components/layout";
-import { format, differenceInMonths } from 'date-fns';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PDFDownloadLink, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
-import { Download, FileSpreadsheet } from 'lucide-react';
+import  { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import { PDFDownloadLink, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { format } from 'date-fns';
+import { Button } from "@/components/ui/button";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { ThemeProvider } from "@/components/theme-provider";
+import CustomSidebar  from '@/components/CustomSidebar';
+import CustomHeader  from '@/components/CustomHeader';
+import { Download, FileSpreadsheet } from "lucide-react";
 
 // Updated interface to match backend response with names
 interface LeaveReport {
@@ -394,123 +396,137 @@ const LeaveReport = () => {
     };
 
     return (
-        <Layout>
-            <div className="w-[66vw] h-[88vh]" style={{
-                paddingLeft: '34vh',
-            }}>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Leave Report - {months[selectedMonth]} {selectedYear}</CardTitle>
-                        <div className="flex flex-wrap gap-4 mt-4">
-                            <Select 
-                                value={selectedMonth.toString()} 
-                                onValueChange={(value) => setSelectedMonth(parseInt(value))}
-                            >
-                                <SelectTrigger className="w-40">
-                                    <SelectValue placeholder="Select month" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {months.map((month, index) => (
-                                        <SelectItem key={index} value={index.toString()}>
-                                            {month}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+        <ThemeProvider>
+            <div className="flex h-screen w-full overflow-hidden">
+                {/* Custom Sidebar */}
+                <CustomSidebar />
 
-                            <Select 
-                                value={selectedYear.toString()} 
-                                onValueChange={(value) => setSelectedYear(parseInt(value))}
-                            >
-                                <SelectTrigger className="w-32">
-                                    <SelectValue placeholder="Select year" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {years.map((year) => (
-                                        <SelectItem key={year} value={year.toString()}>
-                                            {year}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            
-                            <PDFDownloadLink 
-                                document={
-                                    <PDFDocument 
-                                        formattedLeaves={formattedLeaves} 
-                                        month={selectedMonth} 
-                                        year={selectedYear} 
-                                    />
-                                }
-                                fileName={`leave-report-${months[selectedMonth]}-${selectedYear}.pdf`}
-                                className="no-underline"
-                            >
-                                {({ loading }) => (
-                                    <div className="inline-block">
-                                        <Button disabled={loading || formattedLeaves.length === 0}>
-                                            <Download className="h-4 w-4 mr-2" />
-                                            {loading ? 'Generating PDF...' : 'Download PDF'}
+                {/* Main Content Area */}
+                <div className="flex-1 overflow-hidden">
+                    {/* Custom Header */}
+                    <CustomHeader title="Leave Reports" />
+
+                    {/* Main Content with Scrolling */}
+                    <main className="flex-1 w-full h-[calc(100vh-4rem)] overflow-y-auto">
+                        <div className="container mx-auto px-4 py-6 md:px-6 lg:px-8">
+                            <Card className="shadow-md">
+                                <CardHeader>
+                                    <CardTitle className="text-2xl font-medium mb-4">
+                                        Leave Report - {months[selectedMonth]} {selectedYear}
+                                    </CardTitle>
+                                    <div className="flex flex-wrap gap-4 mt-4">
+                                        <Select 
+                                            value={selectedMonth.toString()} 
+                                            onValueChange={(value) => setSelectedMonth(parseInt(value))}
+                                        >
+                                            <SelectTrigger className="w-40">
+                                                <SelectValue placeholder="Select month" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {months.map((month, index) => (
+                                                    <SelectItem key={index} value={index.toString()}>
+                                                        {month}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+
+                                        <Select 
+                                            value={selectedYear.toString()} 
+                                            onValueChange={(value) => setSelectedYear(parseInt(value))}
+                                        >
+                                            <SelectTrigger className="w-32">
+                                                <SelectValue placeholder="Select year" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {years.map((year) => (
+                                                    <SelectItem key={year} value={year.toString()}>
+                                                        {year}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        
+                                        <PDFDownloadLink 
+                                            document={
+                                                <PDFDocument 
+                                                    formattedLeaves={formattedLeaves} 
+                                                    month={selectedMonth} 
+                                                    year={selectedYear} 
+                                                />
+                                            }
+                                            fileName={`leave-report-${months[selectedMonth]}-${selectedYear}.pdf`}
+                                            className="no-underline"
+                                        >
+                                            {({ loading }) => (
+                                                <div className="inline-block">
+                                                    <Button disabled={loading || formattedLeaves.length === 0}>
+                                                        <Download className="h-4 w-4 mr-2" />
+                                                        {loading ? 'Generating PDF...' : 'Download PDF'}
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </PDFDownloadLink>
+
+                                        <Button 
+                                            onClick={exportDetailedMonthlyExcel} 
+                                            disabled={isLoadingDetailed || formattedLeaves.length === 0}
+                                            className="bg-green-600 hover:bg-green-700"
+                                        >
+                                            <FileSpreadsheet className="h-4 w-4 mr-2" />
+                                            {isLoadingDetailed ? 'Preparing...' : 'Export Detailed Excel'}
+                                        </Button>
+
+                                        <Button 
+                                            onClick={exportHistoricalExcel} 
+                                            disabled={isLoadingHistorical}
+                                            className="bg-blue-600 hover:bg-blue-700"
+                                        >
+                                            <FileSpreadsheet className="h-4 w-4 mr-2" />
+                                            {isLoadingHistorical ? 'Preparing...' : 'Export Complete History'}
                                         </Button>
                                     </div>
-                                )}
-                            </PDFDownloadLink>
-
-                            <Button 
-                                onClick={exportDetailedMonthlyExcel} 
-                                disabled={isLoadingDetailed || formattedLeaves.length === 0}
-                                className="bg-green-600 hover:bg-green-700"
-                            >
-                                <FileSpreadsheet className="h-4 w-4 mr-2" />
-                                {isLoadingDetailed ? 'Preparing...' : 'Export Detailed Excel'}
-                            </Button>
-
-                            <Button 
-                                onClick={exportHistoricalExcel} 
-                                disabled={isLoadingHistorical}
-                                className="bg-blue-600 hover:bg-blue-700"
-                            >
-                                <FileSpreadsheet className="h-4 w-4 mr-2" />
-                                {isLoadingHistorical ? 'Preparing...' : 'Export Complete History'}
-                            </Button>
+                                </CardHeader>
+                                <CardContent>
+                                    {isLoading ? (
+                                        <div className="text-center py-4">Loading...</div>
+                                    ) : formattedLeaves.length > 0 ? (
+                                        <div className="mt-4 overflow-x-auto">
+                                            <table className="w-full">
+                                                <thead>
+                                                    <tr className="border-b">
+                                                        <th className="py-2 text-left">Employee Name</th>
+                                                        <th className="py-2 text-left">Sick Leave</th>
+                                                        <th className="py-2 text-left">Casual Leave</th>
+                                                        <th className="py-2 text-left">Earned Leave</th>
+                                                        <th className="py-2 text-left">Unpaid Leave</th>
+                                                        <th className="py-2 text-left">Total Days</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {formattedLeaves.map((leave, index) => (
+                                                        <tr key={index} className="border-b">
+                                                            <td className="py-2">{leave.userName}</td>
+                                                            <td className="py-2">{leave.sick} days</td>
+                                                            <td className="py-2">{leave.casual} days</td>
+                                                            <td className="py-2">{leave.earned} days</td>
+                                                            <td className="py-2">{leave.unpaid} days</td>
+                                                            <td className="py-2">{leave.total} days</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-4">No leave data found for this period</div>
+                                    )}
+                                </CardContent>
+                            </Card>
                         </div>
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? (
-                            <div className="text-center py-4">Loading...</div>
-                        ) : formattedLeaves.length > 0 ? (
-                            <div className="mt-4">
-                                <table className="w-full">
-                                    <thead>
-                                        <tr className="border-b">
-                                            <th className="py-2 text-left">Employee Name</th>
-                                            <th className="py-2 text-left">Sick Leave</th>
-                                            <th className="py-2 text-left">Casual Leave</th>
-                                            <th className="py-2 text-left">Earned Leave</th>
-                                            <th className="py-2 text-left">Unpaid Leave</th>
-                                            <th className="py-2 text-left">Total Days</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {formattedLeaves.map((leave, index) => (
-                                            <tr key={index} className="border-b">
-                                                <td className="py-2">{leave.userName}</td>
-                                                <td className="py-2">{leave.sick} days</td>
-                                                <td className="py-2">{leave.casual} days</td>
-                                                <td className="py-2">{leave.earned} days</td>
-                                                <td className="py-2">{leave.unpaid} days</td>
-                                                <td className="py-2">{leave.total} days</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="text-center py-4">No leave data found for this period</div>
-                        )}
-                    </CardContent>
-                </Card>
+                    </main>
+                </div>
             </div>
-        </Layout>
+        </ThemeProvider>
     );
 };
 

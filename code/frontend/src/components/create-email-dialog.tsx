@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Dialog,
     DialogContent,
@@ -6,13 +6,11 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+    DialogFooter,
 } from "@/components/ui/dialog";
 
 import {
-    Card,
     CardDescription,
-    CardFooter,
-    CardHeader,
 } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
@@ -20,11 +18,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/date-picker";
 import UploadImage from "@/components/upload-image";
-import { CalendarIcon, Send } from "lucide-react";
+import { CalendarIcon, Send, Loader2 } from "lucide-react";
 import axios from "axios";
-import { useEffect } from "react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
-var Branches = ["Hoshangabad", "Lucknow", "Asgard", "TVA", "Arkham City", "Location1","Bhopal"];
+// Removed hardcoded Branches array
 var Teams = ["Tech Team", "Marketing Team", "Sales Team", "HR Team", "Finance Team"];
 
 interface Comment {
@@ -47,48 +52,105 @@ interface Event {
     projects: string[];
 }
 
+interface Location {
+    _id: string;
+    city: string;
+}
+
 export default function CreateEmail() {
-    const [selectedBranch, setSelectedBranch] = useState("Branch");
-    const [selectedTeam, setSelectedTeam] = useState("Team");
+    const [open, setOpen] = useState(false);
+    const [selectedBranch, setSelectedBranch] = useState("");
+    const [selectedTeam, setSelectedTeam] = useState("");
     const [image, setImage] = useState<File | null>(null);
-    const [IsLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [title, setTitle] = useState<string>("");
     const [description, setDescription] = useState<string>("");
     const [start, setStart] = useState<Date>(new Date());
-    const [end, setEnd] = useState<Date>(new Date());
-    const [comments, setComments] = useState<Comment[]>([]);
-    const [selectedDropdown, setSelectedDropdown] = useState<string>("");
+    const [end, setEnd] = useState<Date | undefined>(undefined);
     const [locations, setLocations] = useState<string[]>([]);
     const [projects, setProjects] = useState<string[]>([]);
+    const [branchesLoading, setBranchesLoading] = useState(true);
+    const [branches, setBranches] = useState<Location[]>([]);
+
+    // Fetch locations from API
+    useEffect(() => {
+        const fetchLocations = async () => {
+            setBranchesLoading(true);
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.get('http://localhost:5000/api/locations', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                setBranches(response.data);
+            } catch (error) {
+                console.error('Failed to fetch locations:', error);
+                toast.error("Error fetching locations", {
+                    description: "Could not load branch locations"
+                });
+            } finally {
+                setBranchesLoading(false);
+            }
+        };
+
+        fetchLocations();
+    }, []);
 
     // Handle branch selection
-    const handleBranchChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const branch = e.target.value;
-        if (branch !== "Branch") {
-            setSelectedBranch(branch);
-            setLocations([branch]); // Replace with new branch instead of adding
-        }
+    const handleBranchChange = (branch: string) => {
+        setSelectedBranch(branch);
+        setLocations([branch]); // Replace with new branch instead of adding
     };
 
     // Handle team selection
-    const handleTeamChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const team = e.target.value;
-        if (team !== "Team") {
-            setSelectedTeam(team);
-            setSelectedDropdown(team);
-            setProjects([team]); // Replace with new team instead of adding
+    const handleTeamChange = (team: string) => {
+        setSelectedTeam(team);
+        setProjects([team]); // Replace with new team instead of adding
+    };
+
+    // Handle start date change
+    const handleStartDateChange = (date: Date | undefined) => {
+        if (!date) return; // Ignore undefined values
+        setStart(date);
+        // If end date is before new start date, reset end date
+        if (end && end < date) {
+            setEnd(undefined);
         }
+    };
+
+    const resetForm = () => {
+        setTitle("");
+        setDescription("");
+        setSelectedBranch("");
+        setSelectedTeam("");
+        setImage(null);
+        setLocations([]);
+        setProjects([]);
+        setStart(new Date());
+        setEnd(undefined);
     };
 
     const SubmitEvent = () => {
         // Validation
         if (!title || !description) {
-            alert("Please fill in title and description");
+            toast.error("Missing information", {
+                description: "Please fill in title and description"
+            });
             return;
         }
 
-        if (selectedBranch === "Branch" || selectedTeam === "Team") {
-            alert("Please select a branch and team");
+        if (!selectedBranch || !selectedTeam) {
+            toast.error("Missing information", {
+                description: "Please select a branch and team"
+            });
+            return;
+        }
+
+        if (!end) {
+            toast.error("Missing information", {
+                description: "Please select an end date"
+            });
             return;
         }
 
@@ -101,7 +163,7 @@ export default function CreateEmail() {
         formData.append('description', description);
         formData.append('start', start.toISOString());
         formData.append('end', end.toISOString());
-        formData.append('selected_dropdown', selectedDropdown);
+        formData.append('selected_dropdown', selectedTeam);
         formData.append('locations', JSON.stringify(locations));
         formData.append('projects', JSON.stringify(projects));
         
@@ -118,19 +180,18 @@ export default function CreateEmail() {
         })
             .then(response => {
                 console.log(response.data);
-                alert("Event created successfully!");
-                // Reset form
-                setTitle("");
-                setDescription("");
-                setSelectedBranch("Branch");
-                setSelectedTeam("Team");
-                setImage(null);
-                setLocations([]);
-                setProjects([]);
+                toast.success("Event created", {
+                    description: "Your event has been successfully created!"
+                });
+                // Reset form and close dialog
+                resetForm();
+                setOpen(false);
             })
             .catch(error => {
                 console.error("Error creating event!", error);
-                alert("Error creating event: " + (error.response?.data?.message || "Unknown error"));
+                toast.error("Error", {
+                    description: error.response?.data?.message || "Failed to create event"
+                });
             })
             .finally(() => {
                 setIsLoading(false);
@@ -146,129 +207,161 @@ export default function CreateEmail() {
     const imagePreview = image ? URL.createObjectURL(image) : null;
 
     return (
-        <Dialog>
-            <DialogTrigger>
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
                 <Button className="gap-2 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white shadow-md">
                     <CalendarIcon className="h-4 w-4" />
                     Create Event
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[550px] md:max-w-[650px]">
-                <DialogHeader>
+            <DialogContent className="sm:max-w-[550px] md:max-w-[650px] lg:max-w-[750px] p-0">
+                <DialogHeader className="p-6 pb-2">
                     <DialogTitle className="text-xl font-bold">Create New Event</DialogTitle>
                     <DialogDescription>Fill in the details to create an event notification.</DialogDescription>
                 </DialogHeader>
 
-                <Card className="border-0 shadow-none">
-                    <CardHeader className="px-0 pt-0">
-                        <div className="space-y-4">
-                            <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-                                {/* Branch dropdown using standard select */}
-                                <div className="w-full sm:w-auto">
-                                    <select 
-                                        value={selectedBranch}
-                                        onChange={handleBranchChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="Branch" disabled>Branch</option>
-                                        {Branches.map(branch => (
-                                            <option key={branch} value={branch}>
-                                                {branch}
-                                            </option>
+                <div className="px-6 py-4 overflow-y-auto max-h-[70vh]">
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Branch dropdown using shadcn Select */}
+                            <div className="space-y-2">
+                                <CardDescription>Select Branch</CardDescription>
+                                <Select value={selectedBranch} onValueChange={handleBranchChange}>
+                                    <SelectTrigger className="w-full">
+                                        {branchesLoading ? (
+                                            <span className="flex items-center">
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                Loading...
+                                            </span>
+                                        ) : (
+                                            <SelectValue placeholder="Select branch" />
+                                        )}
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {branches.map(branch => (
+                                            <SelectItem key={branch._id} value={branch.city}>
+                                                {branch.city}
+                                            </SelectItem>
                                         ))}
-                                    </select>
-                                </div>
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                                {/* Team dropdown using standard select */}
-                                <div className="w-full sm:w-auto">
-                                    <select 
-                                        value={selectedTeam}
-                                        onChange={handleTeamChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <option value="Team" disabled>Team</option>
+                            {/* Team dropdown using shadcn Select */}
+                            <div className="space-y-2">
+                                <CardDescription>Select Team</CardDescription>
+                                <Select value={selectedTeam} onValueChange={handleTeamChange}>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select team" />
+                                    </SelectTrigger>
+                                    <SelectContent>
                                         {Teams.map(team => (
-                                            <option key={team} value={team}>
+                                            <SelectItem key={team} value={team}>
                                                 {team}
-                                            </option>
+                                            </SelectItem>
                                         ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <CardDescription>Start Date</CardDescription>
-                                    <DatePicker date={start} setDate={setStart} />
-                                </div>
-                                <div className="space-y-2">
-                                    <CardDescription>End Date</CardDescription>
-                                    <DatePicker date={end} setDate={setEnd} />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <CardDescription>Event Title</CardDescription>
-                                <Input 
-                                    type="text" 
-                                    placeholder="Enter event title" 
-                                    className="focus-visible:ring-blue-500"
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <CardDescription>Event Description</CardDescription>
-                                <Textarea
-                                    placeholder="Enter event details and description..."
-                                    className="min-h-[120px] focus-visible:ring-blue-500"
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <CardDescription>Event Image</CardDescription>
-                                <UploadImage onImageUpload={handleImageSelect}>
-                                    <Button variant="outline" className="w-full">
-                                        {image ? `${image.name} (${(image.size / 1024).toFixed(2)} KB)` : "Upload Image"}
-                                    </Button>
-                                </UploadImage>
-                                
-                                {/* Add image preview */}
-                                {imagePreview && (
-                                    <div className="mt-2 relative rounded-md overflow-hidden border border-gray-200">
-                                        <img 
-                                            src={imagePreview} 
-                                            alt="Image preview" 
-                                            className="w-full max-h-[200px] object-contain"
-                                        />
-                                        <Button 
-                                            variant="destructive" 
-                                            size="sm"
-                                            className="absolute top-2 right-2 rounded-full w-8 h-8 p-0 flex items-center justify-center"
-                                            onClick={() => setImage(null)}
-                                        >
-                                            ×
-                                        </Button>
-                                    </div>
-                                )}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
-                    </CardHeader>
 
-                    <CardFooter className="px-0 pb-0">
-                        <Button
-                            className="w-full gap-2 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white shadow-md"
-                            onClick={SubmitEvent}
-                            disabled={IsLoading}
-                        >
-                            <Send className="h-4 w-4" />
-                            {IsLoading ? "Creating..." : "Create Event"}
-                        </Button>
-                    </CardFooter>
-                </Card>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <CardDescription>Start Date</CardDescription>
+                                <DatePicker date={start} setDate={handleStartDateChange} />
+                            </div>
+                            <div className="space-y-2">
+                                <CardDescription>End Date</CardDescription>
+                                <DatePicker 
+                                    date={end} 
+                                    setDate={setEnd} 
+                                    disabledDates={(date) => date < start} 
+                                    placeholder="Select end date"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <CardDescription>Event Title</CardDescription>
+                            <Input 
+                                type="text" 
+                                placeholder="Enter event title" 
+                                className="focus-visible:ring-blue-500"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <CardDescription>Event Description</CardDescription>
+                            <Textarea
+                                placeholder="Enter event details and description..."
+                                className="min-h-[120px] focus-visible:ring-blue-500"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <CardDescription>Event Image (Optional)</CardDescription>
+                            <UploadImage onImageUpload={handleImageSelect}>
+                                <Button variant="outline" className="w-full">
+                                    {image ? `${image.name} (${(image.size / 1024).toFixed(2)} KB)` : "Upload Image"}
+                                </Button>
+                            </UploadImage>
+                            
+                            {/* Image preview */}
+                            {imagePreview && (
+                                <div className="mt-2 relative rounded-md overflow-hidden border border-gray-200">
+                                    <img 
+                                        src={imagePreview} 
+                                        alt="Image preview" 
+                                        className="w-full max-h-[200px] object-contain"
+                                    />
+                                    <Button 
+                                        variant="destructive" 
+                                        size="sm"
+                                        className="absolute top-2 right-2 rounded-full w-8 h-8 p-0 flex items-center justify-center"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setImage(null);
+                                        }}
+                                    >
+                                        ×
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <DialogFooter className="p-6 pt-2 flex flex-col sm:flex-row gap-3">
+                    <Button
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                        onClick={() => setOpen(false)}
+                        disabled={isLoading}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        className="w-full sm:w-auto gap-2 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white shadow-md"
+                        onClick={SubmitEvent}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Creating...
+                            </>
+                        ) : (
+                            <>
+                                <Send className="h-4 w-4" />
+                                Create Event
+                            </>
+                        )}
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

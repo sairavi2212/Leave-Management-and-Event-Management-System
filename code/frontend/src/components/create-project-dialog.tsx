@@ -33,7 +33,7 @@ interface ProjectFormData {
     users: string[];
     manager: string[];
     startDate: Date;
-    endDate: Date;
+    endDate: Date | null;
 }
 
 export default function CreateProject() {
@@ -73,7 +73,7 @@ export default function CreateProject() {
             return;
         }
 
-        if (formData.endDate < formData.startDate) {
+        if (formData.endDate && formData.endDate < formData.startDate) {
             alert("End date cannot be before start date");
             return;
         }
@@ -209,14 +209,21 @@ export default function CreateProject() {
                                     <CardDescription>Start Date</CardDescription>
                                     <DatePicker 
                                         date={formData.startDate} 
-                                        setDate={(date) => setFormData({...formData, startDate: date})} 
+                                        setDate={(date) => {
+                                            setFormData({...formData, startDate: date ?? new Date()});
+                                            // If end date is before the new start date, reset it
+                                            if (formData.endDate && date && date > formData.endDate) {
+                                                setFormData(prev => ({...prev, endDate: null}));
+                                            }
+                                        }} 
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     <CardDescription>End Date</CardDescription>
                                     <DatePicker 
-                                        date={formData.endDate} 
-                                        setDate={(date) => setFormData({...formData, endDate: date})} 
+                                        date={formData.endDate as Date | undefined} 
+                                        setDate={(date) => setFormData({...formData, endDate: date || null})} 
+                                        disabledDates={(date) => formData.startDate ? date < formData.startDate : false}
                                     />
                                 </div>
                             </div>

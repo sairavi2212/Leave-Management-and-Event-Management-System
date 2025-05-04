@@ -1,4 +1,3 @@
-import React from 'react';
 import {
     SidebarMenu,
     SidebarMenuItem,
@@ -54,27 +53,25 @@ export default function NavUser() {
         <SidebarMenu>
             <SidebarMenuItem>
                 <DropdownMenu>
-                    <DropdownMenuTrigger>
+                    <DropdownMenuTrigger className="w-full">
                         <SidebarMenuButton
-                            // size="lg"
-                            style={{ width: "27vh" , height: "7vh"}}
-                            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                            className="w-full h-auto py-3 px-2 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                         >
-                            <Avatar className="h-10 w-10 rounded-lg">
+                            <Avatar className="h-9 w-9 flex-shrink-0 rounded-lg mr-2">
                                 <AvatarImage src="" alt={userData.name} />
                                 <AvatarFallback className="rounded-lg">
                                     <UserRound />
                                 </AvatarFallback>
                             </Avatar>
-                            <div className="grid flex-1 text-left text-sm leading-tight">
-                                <span className="truncate font-semibold">
-                                    {userData.name}
+                            <div className="flex flex-col flex-1 min-w-0 text-left">
+                                <span className="font-medium truncate text-sm">
+                                    {userData.name || "User"}
                                 </span>
-                                <span className="truncate text-xs">
+                                <span className="text-xs text-muted-foreground truncate">
                                     {userData.email}
                                 </span>
                             </div>
-                            <ChevronsUpDown className="ml-auto size-4" />
+                            <ChevronsUpDown className="ml-2 flex-shrink-0 h-4 w-4 opacity-70" />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
@@ -84,34 +81,33 @@ export default function NavUser() {
                         sideOffset={4}
                     >
                         <DropdownMenuLabel className="p-0 font-normal">
-                            <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                            <div className="flex items-center gap-2 px-3 py-2 text-left text-sm">
                                 <Avatar className="h-8 w-8 rounded-lg">
                                     <AvatarImage src="" alt={userData.name} />
                                     <AvatarFallback className="rounded-lg">
                                         <UserRound />
                                     </AvatarFallback>
                                 </Avatar>
-                                <div className="grid flex-1 text-left text-sm leading-tight">
-                                    <span className="truncate font-semibold">
-                                        {userData.name}
+                                <div className="flex flex-col flex-1 min-w-0">
+                                    <span className="font-semibold truncate">
+                                        {userData.name || "User"}
                                     </span>
-                                    <span className="truncate text-xs">
+                                    <span className="text-xs text-muted-foreground truncate">
                                         {userData.email}
                                     </span>
                                 </div>
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuSeparator />
                         <DropdownMenuGroup>
                             <DropdownMenuItem onClick={() => navigate('/profile')}>
-                                <BadgeCheck className="mr-2" />
+                                <BadgeCheck className="mr-2 h-4 w-4" />
                                 Account
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout}>
-                            <LogOut className="mr-2" />
+                            <LogOut className="mr-2 h-4 w-4" />
                             Log out
                         </DropdownMenuItem>
                     </DropdownMenuContent>

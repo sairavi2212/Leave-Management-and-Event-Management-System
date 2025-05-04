@@ -26,45 +26,95 @@ leaverouter.post("/", auth, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Calculate the duration of the leave request in days
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const durationInDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+    // Determine if the leave should be auto-approved (2 days or less)
+    const isShortLeave = durationInDays <= 2;
+    const leaveStatus = isShortLeave ? "approved" : "pending";
+
     // Create new leave request
     const leave = new Leave({
       userId: req.user.userId,
       leaveType,
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: start,
+      endDate: end,
       reason,
-      status: "pending",
+      status: leaveStatus,
       submittedAt: new Date(),
+      // If auto-approved, set additional fields
+      ...(isShortLeave && {
+        approvedAt: new Date(),
+        comments: "Auto-approved as duration is 2 days or less"
+      })
     });
 
     await leave.save();
 
     // Send email to the parent of the user
     if (user.parent_role && user.parent_role.length > 0) {
-      for (const parentRole of user.parent_role) {
-        const parentEmail = parentRole; // Assuming the first parent role contains the email
+      for (const parentEmail of user.parent_role) {
         const mailOptions = {
           from: "foundationeklavya1@gmail.com",
           to: parentEmail,
-          subject: `Leave Request Submitted by ${user.name}`,
-          html: `
-            <h1>Leave Request Notification</h1>
-            <p>Hello,</p>
-            <p>${user.name} has submitted a leave request with the following details:</p>
-            <p><strong>Leave Type:</strong> ${leaveType}</p>
-            <p><strong>Start Date:</strong> ${startDate}</p>
-            <p><strong>End Date:</strong> ${endDate}</p>
-            <p><strong>Reason:</strong> ${reason}</p>
-            <p>Please log in to the system to review and take action on this request.</p>
-            <p>Best regards,<br>Eklavya Foundation Team</p>
-          `,
+          subject: isShortLeave 
+            ? `Notification: ${user.name} is on Leave (Auto-Approved)` 
+            : `Leave Request Submitted by ${user.name}`,
+          html: isShortLeave 
+            ? `
+              <h1>Leave Notification</h1>
+              <p>Hello,</p>
+              <p>${user.name} is on leave with the following details:</p>
+              <p><strong>Leave Type:</strong> ${leaveType}</p>
+              <p><strong>Start Date:</strong> ${startDate}</p>
+              <p><strong>End Date:</strong> ${endDate}</p>
+              <p><strong>Reason:</strong> ${reason}</p>
+              <p><strong>Status:</strong> Automatically approved (duration ≤ 2 days)</p>
+              <p>This is an auto-approved leave as per the policy for leaves of 2 days or less.</p>
+              <p>Best regards,<br>Eklavya Foundation Team</p>
+            `
+            : `
+              <h1>Leave Request Notification</h1>
+              <p>Hello,</p>
+              <p>${user.name} has submitted a leave request with the following details:</p>
+              <p><strong>Leave Type:</strong> ${leaveType}</p>
+              <p><strong>Start Date:</strong> ${startDate}</p>
+              <p><strong>End Date:</strong> ${endDate}</p>
+              <p><strong>Reason:</strong> ${reason}</p>
+              <p>Please log in to the system to review and take action on this request.</p>
+              <p>Best regards,<br>Eklavya Foundation Team</p>
+            `,
         };
         await transporter.sendMail(mailOptions);
       }
     }
 
+    // If auto-approved, also send a confirmation email to the user
+    if (isShortLeave) {
+      const userMailOptions = {
+        from: "foundationeklavya1@gmail.com",
+        to: user.email,
+        subject: "Your Leave Request has been Auto-Approved",
+        html: `
+          <h1>Leave Request Auto-Approved</h1>
+          <p>Hello ${user.name},</p>
+          <p>Your leave request has been <strong>automatically approved</strong> as it is for 2 days or less.</p>
+          <p><strong>Leave Type:</strong> ${leaveType}</p>
+          <p><strong>Start Date:</strong> ${startDate}</p>
+          <p><strong>End Date:</strong> ${endDate}</p>
+          <p><strong>Reason:</strong> ${reason}</p>
+          <p>Best regards,<br>Eklavya Foundation Team</p>
+        `,
+      };
+      await transporter.sendMail(userMailOptions);
+    }
+
     res.status(201).json({
-      message: "Leave request submitted successfully",
+      message: isShortLeave 
+        ? "Leave request automatically approved (duration ≤ 2 days)" 
+        : "Leave request submitted successfully",
       leave,
     });
   } catch (error) {
@@ -362,7 +412,7 @@ leaverouter.get("/balance", auth, async (req, res) => {
       if (leave.leaveType in usedLeaves) {
         // Calculate duration including both start and end date
         const durationInDays =
-          Math.ceil((leave.endDate - leave.startDate) / (1000 * 60 * 60 * 24)) +
+          Math.ceil((new Date(leave.endDate) - new Date(leave.startDate)) / (1000 * 60 * 60 * 24)) +
           1;
         usedLeaves[leave.leaveType] += durationInDays;
       }
@@ -591,6 +641,109 @@ leaverouter.get("/historical-report", auth, async (req, res) => {
     console.error("Error generating historical leave report:", error);
     res.status(500).json({
       message: "Error generating historical leave report",
+      error: error.message,
+    });
+  }
+});
+
+// Get count of pending leave requests for admin/superadmin
+leaverouter.get("/pending-count", auth, async (req, res) => {
+  try {
+    // First check if user is admin or superadmin
+    const user = await User.findById(req.user.userId);
+    if (user.role !== "admin" && user.role !== "superadmin") {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // Get count of pending leaves that are related to this admin/superadmin
+    let pendingCount = 0;
+    
+    if (user.role === "admin") {
+      // For admin, only count subordinate leaves
+      // First get all leaves
+      const leaves = await Leave.find({ status: "pending" })
+        .populate("userId", "name email parent_role");
+      
+      // Filter to only include leaves where this admin is in parent_role
+      const subordinateLeaves = leaves.filter((leave) => {
+        return leave.userId && 
+               leave.userId.parent_role && 
+               leave.userId.parent_role.length > 0 && 
+               leave.userId.parent_role[0] === user.email;
+      });
+      
+      pendingCount = subordinateLeaves.length;
+    } else {
+      // For superadmin, count all pending leaves
+      pendingCount = await Leave.countDocuments({ status: "pending" });
+    }
+    
+    res.json({ pendingCount });
+  } catch (error) {
+    console.error("Error fetching pending leave count:", error);
+    res.status(500).json({
+      message: "Failed to fetch pending leave count",
+      error: error.message,
+    });
+  }
+});
+
+// Get notifications for a user (approved/rejected leaves)
+leaverouter.get("/notifications", auth, async (req, res) => {
+  try {
+    // Find recent leaves that have been approved or rejected but not read
+    const recentLeaves = await Leave.find({
+      userId: req.user.userId,
+      status: { $in: ["approved", "rejected"] },
+      // Only find leaves that were updated in the last 7 days
+      approvedAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+      // Only return unread notifications
+      isNotificationRead: false
+    }).sort({ approvedAt: -1 });
+    
+    const notifications = recentLeaves.map(leave => ({
+      _id: leave._id,
+      leaveType: leave.leaveType,
+      status: leave.status,
+      approvedAt: leave.approvedAt,
+      read: leave.isNotificationRead
+    }));
+    
+    res.json(notifications);
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    res.status(500).json({
+      message: "Failed to fetch notifications",
+      error: error.message,
+    });
+  }
+});
+
+// Mark notifications as read
+leaverouter.post("/notifications/mark-read", auth, async (req, res) => {
+  try {
+    const { notificationIds } = req.body;
+    
+    if (!notificationIds || !Array.isArray(notificationIds)) {
+      return res.status(400).json({
+        message: "Invalid request. Expected an array of notification IDs"
+      });
+    }
+    
+    // Mark the specified leave notifications as read
+    await Leave.updateMany(
+      { 
+        _id: { $in: notificationIds },
+        userId: req.user.userId // Ensure user can only update their own notifications
+      },
+      { isNotificationRead: true }
+    );
+    
+    res.json({ message: "Notifications marked as read successfully" });
+  } catch (error) {
+    console.error("Error marking notifications as read:", error);
+    res.status(500).json({
+      message: "Failed to mark notifications as read",
       error: error.message,
     });
   }

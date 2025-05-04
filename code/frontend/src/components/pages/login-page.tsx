@@ -186,14 +186,14 @@ export default function LoginPage() {
                   Return to home page
                 </button>
               </div>
-              <div className="text-center">
+              {/* <div className="text-center">
                 <button 
                   onClick={() => navigate("/first-time-login")}
                   className="text-sm text-blue-400 hover:text-blue-300 font-medium"
                 >
                   First Time Login?
                 </button>
-              </div>
+              </div> */}
             </CardFooter>
           </Card>
         </div>

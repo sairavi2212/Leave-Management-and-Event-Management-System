@@ -143,6 +143,118 @@ eventsrouter.get('/',auth, async (req, res) => {
       res.status(500).json({ message: 'Server Error', error: error.message });
     }
   });
+
+// Add a comment to an event
+eventsrouter.post('/:eventId/comments', auth, async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { text } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({ message: 'Comment text is required' });
+    }
+    
+    // Find the event
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+    
+    // Get the user who is commenting
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Add new comment - Use the single name field instead of firstName and lastName
+    const newComment = {
+      userId: user._id,
+      text,
+      userName: user.name || "Anonymous User",
+      replies: []
+    };
+    
+    event.comments.push(newComment);
+    await event.save();
+    
+    res.status(201).json({
+      message: 'Comment added successfully',
+      comment: event.comments[event.comments.length - 1]
+    });
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+});
+
+// Add a reply to a comment
+eventsrouter.post('/:eventId/comments/:commentId/replies', auth, async (req, res) => {
+  try {
+    const { eventId, commentId } = req.params;
+    const { text } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({ message: 'Reply text is required' });
+    }
+    
+    // Find the event
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+    
+    // Find the comment
+    const comment = event.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+    
+    // Get the user who is replying
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Add new reply - Use the single name field
+    const newReply = {
+      userId: user._id,
+      text,
+      userName: user.name || "Anonymous User"
+    };
+    
+    comment.replies.push(newReply);
+    await event.save();
+    
+    res.status(201).json({
+      message: 'Reply added successfully',
+      reply: comment.replies[comment.replies.length - 1]
+    });
+  } catch (error) {
+    console.error('Error adding reply:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+});
+
+// Get all comments for an event
+eventsrouter.get('/:eventId/comments', auth, async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    
+    // Find the event
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+    
+    res.status(200).json({
+      comments: event.comments
+    });
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+});
+
 //export by default the router
 export default eventsrouter;
 
