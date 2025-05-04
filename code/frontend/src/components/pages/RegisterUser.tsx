@@ -36,8 +36,6 @@ export default function RegisterUser() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userRole = localStorage.getItem("userRole");
-    console.log("JWT Token:", token);
-    console.log("User Role from localStorage:", userRole);
     if (userRole !== "superadmin") {
       navigate("/"); // redirect or handle unauthorized access
     }
@@ -59,36 +57,57 @@ export default function RegisterUser() {
     // Convert comma-separated fields to arrays
     const projectsArray = formData.project.split(",").map(item => item.trim()).filter(item => item !== "");
     const parentRoleArray = formData.parent_role.split(",").map(item => item.trim()).filter(item => item !== "");
-
+    
     try {
         const token = localStorage.getItem("token");
-        await axios.post("http://localhost:5000/api/user/register-user", {
-            ...formData,
+        if (!token) {
+          throw new Error("Authentication token not found. Please log in again.");
+        }
+
+        const response = await axios.post("http://localhost:5000/api/user/register-user", {
+            name: formData.name,
+            email: formData.email,
+            role: formData.role,
             age: Number(formData.age),
             contact: Number(formData.contact),
             project: projectsArray,
             parent_role: parentRoleArray,
-            password: "" // initial password is empty for first-time login
+            location: formData.location
         }, {
             headers: {
-            Authorization: `Bearer ${token}`,
-            },
+              Authorization: `Bearer ${token}`
+            }
         });
-      setSuccess("User registered successfully.");
-      setFormData({
-        name: "",
-        email: "",
-        role: "",
-        age: "",
-        project: "",
-        parent_role: "",
-        contact: "",
-        location: "",
-      });
+
+        console.log("Registration response:", response.data);
+        setSuccess("User registered successfully.");
+        setFormData({
+          name: "",
+          email: "",
+          role: "",
+          age: "",
+          project: "",
+          parent_role: "",
+          contact: "",
+          location: "",
+        });
     } catch (err: any) {
-      console.error(err);
       console.error("Error registering user:", err);
-      setError("Failed to register user.");
+      
+      // Provide more specific error messages based on the response
+      if (err.response) {
+        if (err.response.status === 403) {
+          setError("Not authorized. You need admin privileges to register users.");
+        } else if (err.response.status === 400 && err.response.data.message) {
+          setError(err.response.data.message); // Show specific error message from server
+        } else {
+          setError(`Registration failed: ${err.response.data.message || "Unknown error"}`);
+        }
+      } else if (err.request) {
+        setError("Server not responding. Please check your connection and try again.");
+      } else {
+        setError(err.message || "Failed to register user.");
+      }
     } finally {
       setIsLoading(false);
     }

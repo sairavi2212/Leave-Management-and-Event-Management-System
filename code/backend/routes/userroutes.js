@@ -7,14 +7,6 @@ import crypto from 'crypto';
 const userrouter = express.Router();
 import transporter from '../utils/email.js'; // Import the transporter
 
-// const transporter = nodemailer.createTransport({
-//   service: 'gmail',
-//   auth: {
-//     user: 'foundationeklavya1@gmail.com',
-//     pass: 'ewmy guwx keia ptqg  ',
-//   }
-// });
-
 
 userrouter.put("/profile", auth, async (req, res) => {
     try {
@@ -34,8 +26,7 @@ userrouter.put("/profile", auth, async (req, res) => {
       console.error("Error updating user profile:", error);
       res.status(500).json({ message: "Server Error" });
     }
-  }
-  );
+  });
 
 userrouter.post('/login', async (req, res) => {
   try {
@@ -58,7 +49,7 @@ userrouter.post('/login', async (req, res) => {
       }
     }
     const token = jwt.sign(
-      { userId: user.id },
+      { userId: user._id },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -183,6 +174,7 @@ userrouter.post('/register-user', auth, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 export default userrouter;
 
