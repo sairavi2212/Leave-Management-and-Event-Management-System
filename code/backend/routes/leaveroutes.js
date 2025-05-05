@@ -340,7 +340,6 @@ leaverouter.get("/report", auth, async (req, res) => {
       const filtered_leaves = all_leaves.filter((leave) => {
         return leave.userId.location === location_user;
       });
-      console.log(filtered_leaves);
       for (const leave of filtered_leaves) {
         if (!report[leave.userId]) {
           report[leave.userId] = {};
@@ -747,6 +746,6 @@ leaverouter.post("/notifications/mark-read", auth, async (req, res) => {
       error: error.message,
     });
   }
-});
+}); 
 
 export default leaverouter;
