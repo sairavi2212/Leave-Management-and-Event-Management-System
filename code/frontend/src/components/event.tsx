@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EventComments from "@/components/event-comments";
 
-export default function Email({
+export default function Event({
     Title,
     Email,
     Description,

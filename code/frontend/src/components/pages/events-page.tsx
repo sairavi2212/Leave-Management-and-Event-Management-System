@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { Loader2, } from "lucide-react";
 import { motion } from "framer-motion";
-import EmailList from "@/components/email-list";
-import CreateEmail from "@/components/create-email-dialog";
+import EmailList from "@/components/event-list";
+import CreateEvent from "@/components/create-event-dialog";
 import { ThemeProvider } from "@/components/theme-provider";
 import CustomSidebar from '@/components/CustomSidebar';
 import CustomHeader from '@/components/CustomHeader';
@@ -82,12 +82,12 @@ export default function EventsPage() {
                                 <h1 className="text-3xl font-bold tracking-tight">Events</h1>
                                 
                                 <div className="flex space-x-3">
-                                    {/* Only show one CreateEmail component since it's actually for creating events */}
+                                    {/* Only show one CreateEvent component since it's actually for creating events */}
                                     <motion.div
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.98 }}
                                     >
-                                        <CreateEmail />
+                                        <CreateEvent />
                                     </motion.div>
                                 </div>
                             </div>

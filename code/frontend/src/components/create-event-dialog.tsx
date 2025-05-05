@@ -57,7 +57,7 @@ interface Location {
     city: string;
 }
 
-export default function CreateEmail() {
+export default function CreateEvent() {
     const [open, setOpen] = useState(false);
     const [selectedBranch, setSelectedBranch] = useState("");
     const [selectedTeam, setSelectedTeam] = useState("");

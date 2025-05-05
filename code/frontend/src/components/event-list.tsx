@@ -1,4 +1,4 @@
-import Email from "@/components/email";
+import Event from "@/components/event";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -22,7 +22,7 @@ interface Event {
     projects: string[];
 }
 
-export default function EmailList() {
+export default function EventList() {
     const [events, setEvents] = useState<Event[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
@@ -136,7 +136,7 @@ export default function EmailList() {
                                     whileHover={{ scale: 1.01 }}
                                     className="hover:bg-accent/50 rounded-lg transition-all"
                                 >
-                                    <Email
+                                    <Event
                                         Title={event.title}
                                         Email={event.title}
                                         Description={event.description}
